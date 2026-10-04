@@ -3474,7 +3474,7 @@ function Window:_clampToScreen()
     end
 end
 
--- Floating icon that opens / closes the window: a clean square logo tile. Drag it anywhere; tap to toggle.
+-- Floating icon that opens / closes the window: a round logo disc with a pink border. Drag it anywhere; tap to toggle.
 function Window:_createOpenButton(opts)
     local gui = self.Gui
     local size = TOUCH and 60 or 54
@@ -3491,7 +3491,7 @@ function Window:_createOpenButton(opts)
         ZIndex = 30,
         Parent = gui,
     })
-    -- Clean tile: white face, the logo in its own colours. No halos and nothing per frame; the only movement is
+    -- Clean disc: white face, the logo in its own colours. No halos and nothing per frame; the only movement is
     -- the input-driven hover / press scale below.
     local face = create("Frame", {
         Size = UDim2.fromScale(1, 1),
@@ -3500,8 +3500,15 @@ function Window:_createOpenButton(opts)
         ZIndex = 30,
         Parent = button,
     })
-    -- Square tile, no border; the corners only soften enough not to look jagged.
-    corner(face, UDim.new(0.18, 0))
+    -- Round disc with a blossom pink border.
+    corner(face, UDim.new(1, 0))
+    create("UIStroke", {
+        Name = "Border",
+        Thickness = 2.5,
+        Color = Theme.Accent,
+        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+        Parent = face,
+    })
     local icon = create("ImageLabel", {
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.fromScale(0.5, 0.5),
