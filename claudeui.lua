@@ -3509,15 +3509,18 @@ function Window:_createOpenButton(opts)
         ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
         Parent = face,
     })
+    -- The logo is a square picture with its own background: it fills the disc and gets its own round corner, which
+    -- crops the image itself (the disc's corner does not clip its children).
     local icon = create("ImageLabel", {
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.fromScale(0.62, 0.62),
+        Size = UDim2.fromScale(1, 1),
         BackgroundTransparency = 1,
-        ScaleType = Enum.ScaleType.Fit,
+        ScaleType = Enum.ScaleType.Crop,
         ZIndex = 31,
         Parent = face,
     })
+    corner(icon, UDim.new(1, 0))
     applyIcon(icon, opts.Icon or Assets.Logo)
     local buttonScale = create("UIScale", { Parent = button })
     self.OpenButton = button
