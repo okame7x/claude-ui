@@ -520,6 +520,29 @@ local function applyIcon(imageLabel, icon)
     imageLabel.ImageRectSize = rectSize or Vector2.zero
 end
 
+-- Re-executing must replace, not stack: a ScreenGui with the same name already in `parent` (a previous run of the
+-- hub) is destroyed before the new one goes in, so old windows / icons never sit on top of the new ones.
+local function replaceScreen(gui, parent)
+    for _, old in ipairs(parent:GetChildren()) do
+        if old ~= gui and old:IsA("ScreenGui") and old.Name == gui.Name then
+            pcall(old.Destroy, old)
+        end
+    end
+    gui.Parent = parent
+end
+
+-- One live object per name across executions (shared survives re-running the script): the previous window / HUD
+-- with this name is fully destroyed (connections included) before the new one takes its place.
+local function claimSlot(name, object)
+    local registry = shared.BloomUI or {}
+    shared.BloomUI = registry
+    local previous = registry[name]
+    if previous and previous ~= object and type(previous.Destroy) == "function" then
+        pcall(previous.Destroy, previous)
+    end
+    registry[name] = object
+end
+
 local function defaultParent()
     local hidden
     pcall(function()
@@ -2704,6 +2727,7 @@ function Library.Window(_, opts)
     })
     gui:SetAttribute("BloomUI", true)
     self.Gui = gui
+    claimSlot("Window:" .. gui.Name, self)
 
     local root = create("Frame", {
         Name = "Window",
@@ -3018,7 +3042,7 @@ function Library.Window(_, opts)
             syn.protect_gui(gui)
         end
     end)
-    gui.Parent = opts.Parent or defaultParent()
+    replaceScreen(gui, opts.Parent or defaultParent())
 
     scale.Scale = 0.9
     body.GroupTransparency = 1
@@ -5975,7 +5999,7 @@ function Hud.screen(name, order)
             syn.protect_gui(gui)
         end
     end)
-    gui.Parent = defaultParent()
+    replaceScreen(gui, defaultParent())
     return gui
 end
 
@@ -6157,6 +6181,7 @@ function Library:CreateStatus(opts)
     local connections = status._connections
     local gui = Hud.screen(opts.Name or "BloomStatus", 995)
     status.Gui = gui
+    claimSlot("Status:" .. gui.Name, status)
 
     local frame = Hud.plate(gui, {
         AnchorPoint = Vector2.new(0.5, 0),
@@ -6745,6 +6770,7 @@ function Library:CreateStealPanel(opts)
     local connections = panel._connections
     local gui = Hud.screen(opts.Name or "BloomSteal", 994)
     panel.Gui = gui
+    claimSlot("Steal:" .. gui.Name, panel)
     local right = opts.Side ~= "Left"
     local width, height = opts.Width or 330, opts.Height or 420
     local openPosition = UDim2.new(right and 1 or 0, right and -16 or 16, 0.5, 0)
