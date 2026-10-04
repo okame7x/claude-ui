@@ -249,10 +249,10 @@ local TOUCH = UserInputService.TouchEnabled and not UserInputService.KeyboardEna
 Library.Touch = TOUCH
 
 local SIDEBAR_WIDTH = 156
--- Sidebar tabs: black plate, light name, dark rose rim (the selected one wears the pink button face).
-local TAB_BLACK = Color3.fromRGB(22, 14, 20)
-local TAB_RIM = Color3.fromRGB(74, 42, 62)
-local TAB_TEXT = Color3.fromRGB(238, 226, 234)
+-- Sidebar tabs: white plate, dark captions and a pink selection outline.
+local TAB_SURFACE = Color3.new(1, 1, 1)
+local TAB_RIM = Theme.Outline
+local TAB_TEXT = Theme.Text
 local HEADER_HEIGHT = 72
 local CARD_HEIGHT = TOUCH and 54 or 48
 local CARD_HEIGHT_DESC = TOUCH and 70 or 64
@@ -4496,11 +4496,10 @@ function Window:Tab(opts, icon)
         self._rightTabs += 1
     end
 
-    -- Black tab with pink: a black plate, light name, pink icon and a dark rose rim that turns pink on hover; the
-    -- selected one shows the pink button face over it.
+    -- White tabs with dark captions; pink outlines and icons show selection.
     local button = create("TextButton", {
         Size = UDim2.new(1, 0, 0, 38),
-        BackgroundColor3 = TAB_BLACK,
+        BackgroundColor3 = TAB_SURFACE,
         BackgroundTransparency = 0,
         Text = "",
         AutoButtonColor = false,
@@ -4513,7 +4512,7 @@ function Window:Tab(opts, icon)
     buttonStroke:SetAttribute("RestColor", TAB_RIM)
     scaleFeedback(button, 1.03, 0.96)
     tab._button = button
-    -- Selected tab: the pink button face fading in behind the label (shown by SelectTab).
+    -- Selected tab retains a white surface.
     local selectedFace = create("CanvasGroup", {
         Size = UDim2.fromScale(1, 1),
         BackgroundTransparency = 1,
@@ -4521,7 +4520,9 @@ function Window:Tab(opts, icon)
         ZIndex = 0,
         Parent = button,
     })
-    buttonFace(selectedFace, 0)
+    selectedFace.BackgroundColor3 = TAB_SURFACE
+    selectedFace.BackgroundTransparency = 0
+    corner(selectedFace)
     tab._selectedFace = selectedFace
 
     local hasIcon = opts.Icon ~= nil
@@ -4903,7 +4904,7 @@ function Window:SelectTab(tab)
     self._transitionGeneration = generation
 
     if previous then
-        -- Back to the black tab: plate and rim shown again, light name.
+        -- Restore the white tab and its neutral outline.
         tween(previous._button, { BackgroundTransparency = 0 }, 0.2)
         tween(previous._stroke, { Transparency = 0, Color = TAB_RIM }, 0.2)
         tween(previous._label, { TextColor3 = TAB_TEXT }, 0.2)
@@ -4927,15 +4928,14 @@ function Window:SelectTab(tab)
         end)
     end
 
-    -- The button face is the selected look, so the plate itself stays clear.
-    tween(tab._button, { BackgroundTransparency = 1 }, 0.2)
-    tween(tab._stroke, { Transparency = 1 }, 0.2)
-    tween(tab._label, { TextColor3 = Color3.new(1, 1, 1) }, 0.2)
+    tween(tab._button, { BackgroundTransparency = 0 }, 0.2)
+    tween(tab._stroke, { Transparency = 0, Color = Theme.Accent }, 0.2)
+    tween(tab._label, { TextColor3 = TAB_TEXT }, 0.2)
     if tab._selectedFace then
         tween(tab._selectedFace, { GroupTransparency = 0 }, 0.2)
     end
     if tab._icon then
-        tween(tab._icon, { ImageColor3 = Color3.new(1, 1, 1) }, 0.2)
+        tween(tab._icon, { ImageColor3 = Theme.Accent }, 0.2)
     end
 
     self:_placeIndicator(tab)
@@ -5234,7 +5234,7 @@ local function addSetValueAlias(handle)
     return handle
 end
 
--- Collapsible section: a header plate with shiny text and an accent chevron, the rows below it. text may be
+-- Collapsible section: a black header with white text and an accent chevron, the rows below it. text may be
 -- a string or { Name, Expanded }; Expanded defaults to the tab's SectionsExpanded (true when unset).
 function Tab:AddSection(text)
     local expanded = self._sectionsExpanded ~= false
@@ -5260,8 +5260,8 @@ function Tab:AddSection(text)
 
     local heading = create("TextButton", {
         Size = UDim2.new(1, 0, 0, 32),
-        BackgroundColor3 = Style.Plate,
-        BackgroundTransparency = 0.35,
+        BackgroundColor3 = Color3.new(0, 0, 0),
+        BackgroundTransparency = 0,
         BorderSizePixel = 0,
         AutoButtonColor = false,
         Text = "",
@@ -5279,7 +5279,7 @@ function Tab:AddSection(text)
         TextSize = 14,
         Parent = heading,
     })
-    shinyText(headingText)
+    shinyText(headingText, true)
     local chevron = create("ImageLabel", {
         AnchorPoint = Vector2.new(1, 0.5),
         Position = UDim2.new(1, -12, 0.5, 0),
