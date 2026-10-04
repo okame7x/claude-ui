@@ -6121,16 +6121,22 @@ function Hud.autoScale(gui, target, connections)
     return scale
 end
 
--- Keeps `target` fully on screen (like the window's _clampToScreen), `margin` px from the edges; a HUD bigger than
--- the screen pins to its top-left. Moves it by the overflow only, so its anchor and scale are untouched.
+-- Keeps `target` (a direct child of the ScreenGui) fully on screen, like the window's _clampToScreen, `margin` px
+-- from the edges; a HUD bigger than the screen pins to its top-left. Its on-screen box is worked out from Position /
+-- AnchorPoint instead of AbsolutePosition, which only refreshes on the next frame (right after a Position change it
+-- still holds the old spot, so a clamp during a drag would always miss).
 function Hud.clamp(gui, target, margin)
     margin = margin or 8
     local screen = gui.AbsoluteSize
     if screen.X <= 0 or screen.Y <= 0 or not target.Visible then
         return
     end
-    local position = target.AbsolutePosition - gui.AbsolutePosition
     local size = target.AbsoluteSize
+    local spot, anchor = target.Position, target.AnchorPoint
+    local position = Vector2.new(
+        screen.X * spot.X.Scale + spot.X.Offset - anchor.X * size.X,
+        screen.Y * spot.Y.Scale + spot.Y.Offset - anchor.Y * size.Y
+    )
     local function overflow(start, length, limit)
         if start < margin or length > limit - margin * 2 then
             return margin - start

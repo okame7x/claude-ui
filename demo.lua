@@ -1,6 +1,7 @@
 -- Bloom Hub UI demo: every element, collapsible sections, right-side tabs, and the Status / Steal HUD templates
 -- fed with fake data. Everything only prints / notifies.
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/okame7x/claude-ui/main/claudeui.lua"))()
+-- The ?t= keeps executors that cache HttpGet for the session from handing back an older library.
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/okame7x/claude-ui/main/claudeui.lua?t=" .. tostring(os.time())))()
 
 local Window = Library:CreateWindow({
 	Name = "Bloom Hub",
