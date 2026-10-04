@@ -1154,8 +1154,24 @@ function Tab:Button(opts)
 end
 
 function Tab:Toggle(opts)
-    local button, buttonStroke
-    opts, button, buttonStroke = beginElement(self, opts, { Title = "Name", Description = "Desc", CurrentValue = "Default", Value = "Default" }, "TextButton", 56, "Toggle")
+    local button, buttonStroke, toggleTitle, _
+    opts, button, buttonStroke, _, toggleTitle = beginElement(self, opts, { Title = "Name", Description = "Desc", CurrentValue = "Default", Value = "Default" }, "TextButton", 56, "Toggle")
+
+    -- Black and pink: a near-black name, a pink bar on the left that lights up with the switch, and a pink-tinted card
+    -- with a pink rim while it is on.
+    if toggleTitle then
+        toggleTitle.TextColor3 = Color3.fromRGB(24, 10, 18)
+    end
+    local bar = create("Frame", {
+        Position = UDim2.fromOffset(5, 10),
+        Size = UDim2.new(0, 3, 1, -20),
+        BackgroundColor3 = Theme.Accent,
+        BackgroundTransparency = 0.7,
+        BorderSizePixel = 0,
+        Parent = button,
+    })
+    corner(bar, UDim.new(1, 0))
+    local restBackground = button.BackgroundColor3
 
     local pill = create("Frame", {
         AnchorPoint = Vector2.new(1, 0.5),
@@ -1202,9 +1218,14 @@ function Tab:Toggle(opts)
     local function render(animate)
         local on = self_.Value
         local duration = animate and 0.25 or 0
-        -- Accent pink for "on"; the knob goes white.
+        -- Accent pink for "on"; the knob goes white, the bar lights up, the card turns blush with a pink rim.
         tween(pill, { BackgroundColor3 = on and Style.AccentColor or Theme.Surface3 }, duration)
         tween(pillGlow, { ImageTransparency = on and 0.75 or 1 }, duration)
+        tween(bar, { BackgroundTransparency = on and 0 or 0.7 }, duration)
+        tween(button, { BackgroundColor3 = on and Theme.Accent:Lerp(Color3.new(1, 1, 1), 0.86) or restBackground }, duration)
+        local rim = on and Theme.Accent or Theme.Outline
+        buttonStroke:SetAttribute("RestColor", rim)
+        tween(buttonStroke, { Color = rim }, duration)
         local knobSize = TOUCH and 18 or 14
         tween(knob, {
             Position = on and UDim2.new(0, (TOUCH and 44 or 36) - 3 - knobSize, 0.5, 0) or UDim2.new(0, 3, 0.5, 0),
@@ -4525,7 +4546,7 @@ function Window:Tab(opts, icon)
             Position = UDim2.new(0, 12, 0.5, 0),
             Size = UDim2.fromOffset(16, 16),
             BackgroundTransparency = 1,
-            ImageColor3 = Theme.Muted,
+            ImageColor3 = Theme.Accent,
             ScaleType = Enum.ScaleType.Fit,
             Parent = button,
         })
@@ -4536,7 +4557,7 @@ function Window:Tab(opts, icon)
         Position = UDim2.fromOffset(hasIcon and 36 or 14, 0),
         Size = UDim2.new(1, -(hasIcon and 44 or 22), 1, 0),
         Text = tab.Name,
-        TextColor3 = Theme.Muted,
+        TextColor3 = Color3.fromRGB(24, 10, 18),
         Parent = button,
     })
 
@@ -4901,12 +4922,12 @@ function Window:SelectTab(tab)
     if previous then
         tween(previous._button, { BackgroundTransparency = 1 }, 0.2)
         tween(previous._stroke, { Transparency = 1 }, 0.2)
-        tween(previous._label, { TextColor3 = Theme.Muted }, 0.2)
+        tween(previous._label, { TextColor3 = Color3.fromRGB(24, 10, 18) }, 0.2)
         if previous._selectedFace then
             tween(previous._selectedFace, { GroupTransparency = 1 }, 0.2)
         end
         if previous._icon then
-            tween(previous._icon, { ImageColor3 = Theme.Muted }, 0.2)
+            tween(previous._icon, { ImageColor3 = Theme.Accent }, 0.2)
         end
         local outLayer = self._outLayer
         previous._page.Parent = outLayer
