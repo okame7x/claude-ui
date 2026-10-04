@@ -2658,6 +2658,10 @@ function Library.Window(_, opts)
     if type(opts.Keybind) == "string" then
         opts.Keybind = Enum.KeyCode[opts.Keybind]
     end
+    -- GameFont = true (or { Body = true }): take the game's text style before anything is drawn.
+    if opts.GameFont then
+        pcall(Library.UseGameFont, Library, type(opts.GameFont) == "table" and opts.GameFont or nil)
+    end
     -- Compact by default so the game (its HUD, the egg field) stays visible next to the hub.
     local size = opts.Size or (TOUCH and UDim2.fromOffset(560, 400) or UDim2.fromOffset(580, 420))
     local keybind = opts.Keybind or Enum.KeyCode.RightControl
@@ -2698,6 +2702,7 @@ function Library.Window(_, opts)
         DisplayOrder = 999,
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
     })
+    gui:SetAttribute("BloomUI", true)
     self.Gui = gui
 
     local root = create("Frame", {
@@ -2949,12 +2954,13 @@ function Library.Window(_, opts)
         Name = "Notifications",
         AnchorPoint = Vector2.new(1, 1),
         Position = UDim2.new(1, -20, 1, -20),
-        Size = UDim2.new(0, 280, 1, -40),
+        Size = UDim2.new(0, 220, 1, -40),
         BackgroundTransparency = 1,
         Parent = gui,
     })
     local function fitToasts()
-        notifyHolder.Size = UDim2.new(0, math.min(280, gui.AbsoluteSize.X - 40), 1, -40)
+        -- Compact toasts: a third of a phone screen at most, never wider than 220.
+        notifyHolder.Size = UDim2.new(0, math.min(220, math.floor(gui.AbsoluteSize.X * 0.32)), 1, -40)
     end
     table.insert(self._connections, gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(fitToasts))
     create("UIListLayout", {
@@ -3084,6 +3090,18 @@ local function pointInside(point, object)
         and point.Y >= position.Y and point.Y <= position.Y + size.Y
 end
 
+-- Inside `object` and within its border band: windows and HUDs only move when grabbed by their edges, so a press in
+-- the middle (scrolling a list, missing a button) never drags them.
+local EDGE_BAND = TOUCH and 22 or 14
+local function nearEdge(point, object)
+    if not pointInside(point, object) then
+        return false
+    end
+    local position, size = object.AbsolutePosition, object.AbsoluteSize
+    return point.X - position.X <= EDGE_BAND or position.X + size.X - point.X <= EDGE_BAND
+        or point.Y - position.Y <= EDGE_BAND or position.Y + size.Y - point.Y <= EDGE_BAND
+end
+
 local function isShown(object, stopAt, point)
     local child = object
     while child and child ~= stopAt and child:IsA("GuiObject") do
@@ -3151,7 +3169,7 @@ function Window:_enableDrag()
             return
         end
         local point = input.UserInputType == Enum.UserInputType.Touch and Vector2.new(input.Position.X, input.Position.Y) or pointerPosition()
-        if not pointInside(point, self.Body) or self:_overControl(point) then
+        if not nearEdge(point, self.Body) or self:_overControl(point) then
             return
         end
         dragInput, touchPoint = input, point
@@ -3456,7 +3474,7 @@ function Window:_clampToScreen()
     end
 end
 
--- Floating icon that opens / closes the window: a clean round logo disc. Drag it anywhere; tap to toggle.
+-- Floating icon that opens / closes the window: a clean square logo tile. Drag it anywhere; tap to toggle.
 function Window:_createOpenButton(opts)
     local gui = self.Gui
     local size = TOUCH and 60 or 54
@@ -3473,8 +3491,8 @@ function Window:_createOpenButton(opts)
         ZIndex = 30,
         Parent = gui,
     })
-    -- Clean disc: white face, the logo in its own colours, a soft blossom ring. No halos and
-    -- nothing per frame; the only movement is the input-driven hover / press scale below.
+    -- Clean tile: white face, the logo in its own colours. No halos and nothing per frame; the only movement is
+    -- the input-driven hover / press scale below.
     local face = create("Frame", {
         Size = UDim2.fromScale(1, 1),
         BackgroundColor3 = Color3.new(1, 1, 1),
@@ -3482,24 +3500,8 @@ function Window:_createOpenButton(opts)
         ZIndex = 30,
         Parent = button,
     })
-    corner(face, UDim.new(1, 0))
-    -- Blossom ring: pink into lilac across the disc, static (no per-frame work).
-    local ring = create("UIStroke", {
-        Name = "Ring",
-        Thickness = 3,
-        Color = Color3.new(1, 1, 1),
-        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-        Parent = face,
-    })
-    create("UIGradient", {
-        Rotation = 45,
-        Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Theme.Accent),
-            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 170, 214)),
-            ColorSequenceKeypoint.new(1, Theme.Accent2),
-        }),
-        Parent = ring,
-    })
+    -- Square tile, no border; the corners only soften enough not to look jagged.
+    corner(face, UDim.new(0.18, 0))
     local icon = create("ImageLabel", {
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.fromScale(0.5, 0.5),
@@ -4926,29 +4928,29 @@ function Window:Notify(opts)
         BackgroundTransparency = 1,
         Parent = toast,
     })
-    padding(inner, 16, 16, 14, 24)
+    padding(inner, 12, 12, 10, 18)
 
     local titleOffset = 0
     if opts.Icon then
-        glowIcon(inner, opts.Icon, titleColor == Theme.Text and Theme.Accent or titleColor, UDim2.new(0, 0, 0, 8))
-        titleOffset = 24
+        glowIcon(inner, opts.Icon, titleColor == Theme.Text and Theme.Accent or titleColor, UDim2.new(0, 0, 0, 7))
+        titleOffset = 20
     end
     label({
         Position = UDim2.fromOffset(titleOffset, 0),
-        Size = UDim2.new(1, -28 - titleOffset, 0, 16),
+        Size = UDim2.new(1, -24 - titleOffset, 0, 14),
         Text = opts.Title or "Notification",
-        TextSize = 14,
+        TextSize = 12,
         TextColor3 = titleColor,
         Parent = inner,
     })
     local closeButton = create("TextButton", {
         AnchorPoint = Vector2.new(1, 0),
-        Position = UDim2.new(1, 6, 0, -5),
-        Size = UDim2.fromOffset(24, 24),
+        Position = UDim2.new(1, 5, 0, -4),
+        Size = UDim2.fromOffset(20, 20),
         BackgroundTransparency = 1,
         Text = "×",
         TextColor3 = Theme.Muted,
-        TextSize = 22,
+        TextSize = 17,
         FontFace = Fonts.Bold,
         AutoButtonColor = false,
         Parent = inner,
@@ -4961,11 +4963,11 @@ function Window:Notify(opts)
     end)
     if opts.Content then
         label({
-            Position = UDim2.fromOffset(titleOffset, 21),
+            Position = UDim2.fromOffset(titleOffset, 17),
             Size = UDim2.new(1, -titleOffset, 0, 0),
             AutomaticSize = Enum.AutomaticSize.Y,
             Text = opts.Content,
-            TextSize = 13,
+            TextSize = 11,
             FontFace = Fonts.Regular,
             TextColor3 = Theme.Muted,
             TextWrapped = true,
@@ -4977,8 +4979,8 @@ function Window:Notify(opts)
 
     local track = create("Frame", {
         AnchorPoint = Vector2.new(0, 1),
-        Position = UDim2.new(0, 16, 1, -8),
-        Size = UDim2.new(1, -32, 0, 3),
+        Position = UDim2.new(0, 12, 1, -6),
+        Size = UDim2.new(1, -24, 0, 2),
         BackgroundColor3 = Theme.Surface3,
         BorderSizePixel = 0,
         Parent = toast,
@@ -5856,10 +5858,96 @@ local Hud = {
     Green = { Color3.fromRGB(58, 255, 55), Color3.fromRGB(20, 109, 0) },
     Grey = { Color3.fromRGB(218, 204, 222), Color3.fromRGB(122, 100, 130) },
     Bloom = { Color3.fromRGB(255, 150, 205), Color3.fromRGB(214, 52, 136) },
+    Sky = { Color3.fromRGB(130, 228, 255), Color3.fromRGB(18, 156, 255) },
     Lilac = { Color3.fromRGB(206, 170, 255), Color3.fromRGB(130, 76, 220) },
     Gold = { Color3.fromRGB(255, 214, 84), Color3.fromRGB(255, 150, 20) },
 }
 Library.Hud = Hud
+Library.Screens = Library.Screens or {}
+
+-- The game's own UI text style: the FontFace (family, weight, italic) most used by the visible text in PlayerGui,
+-- weighted by text size. Headings, element names and pills (Fonts.Title / Heavy) take it; opts.Body = true moves the
+-- body text to the same family too. Works before CreateWindow (or with CreateWindow{ GameFont = true }) and after
+-- it: text already on screen is restyled. Returns the font, or nil when the game shows no text yet.
+function Library:UseGameFont(opts)
+    opts = type(opts) == "table" and opts or {}
+    local playerGui = LocalPlayer:FindFirstChildOfClass("PlayerGui")
+    if not playerGui then
+        return nil
+    end
+    local scores, faces = {}, {}
+    for _, object in playerGui:GetDescendants() do
+        if not (object:IsA("TextLabel") or object:IsA("TextButton")) then
+            continue
+        end
+        local screen = object:FindFirstAncestorOfClass("ScreenGui")
+        if not screen or screen:GetAttribute("BloomUI") or not screen.Enabled or object.Text == "" then
+            continue
+        end
+        local ok, face = pcall(function()
+            return object.FontFace
+        end)
+        if ok and typeof(face) == "Font" then
+            local key = face.Family .. "|" .. face.Weight.Name .. "|" .. face.Style.Name
+            scores[key] = (scores[key] or 0) + (object.TextScaled and 24 or math.max(object.TextSize, 8))
+            faces[key] = face
+        end
+    end
+    local best, bestScore = nil, 0
+    for key, score in pairs(scores) do
+        if score > bestScore then
+            best, bestScore = faces[key], score
+        end
+    end
+    if not best then
+        return nil
+    end
+    local previous = {}
+    for name, face in pairs(Fonts) do
+        previous[name] = face
+    end
+    Fonts.Title = best
+    Fonts.Heavy = Font.new(best.Family, Enum.FontWeight.Bold, best.Style)
+    if opts.Body then
+        Fonts.Regular = Font.new(best.Family, Enum.FontWeight.Regular, best.Style)
+        Fonts.Medium = Font.new(best.Family, Enum.FontWeight.Medium, best.Style)
+        Fonts.Bold = Font.new(best.Family, Enum.FontWeight.SemiBold, best.Style)
+    end
+    Library:ApplyFonts(previous)
+    Library.GameFont = best
+    return best
+end
+
+-- Moves text already built from the faces in `previous` (name -> Font) to the current Library.Fonts.
+function Library:ApplyFonts(previous)
+    local map = {}
+    for name, face in pairs(previous or {}) do
+        if Fonts[name] and Fonts[name] ~= face then
+            map[face] = Fonts[name]
+        end
+    end
+    if next(map) == nil then
+        return
+    end
+    local screens = table.clone(Library.Screens)
+    for _, window in ipairs(Library.Windows) do
+        table.insert(screens, window.Gui)
+    end
+    for _, screen in ipairs(screens) do
+        if screen and screen.Parent then
+            for _, object in screen:GetDescendants() do
+                if object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
+                    for old, new in pairs(map) do
+                        if object.FontFace == old then
+                            object.FontFace = new
+                            break
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
 
 function Hud.screen(name, order)
     local gui = create("ScreenGui", {
@@ -5869,6 +5957,8 @@ function Hud.screen(name, order)
         DisplayOrder = order or 990,
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
     })
+    gui:SetAttribute("BloomUI", true)
+    table.insert(Library.Screens, gui)
     pcall(function()
         if typeof(syn) == "table" and typeof(syn.protect_gui) == "function" then
             syn.protect_gui(gui)
@@ -5893,17 +5983,25 @@ function Hud.autoScale(gui, target, connections)
     return scale
 end
 
--- Drags `target` by `handle` with the touch / mouse that started it (another finger never takes over).
-function Hud.drag(handle, target, connections)
+-- Drags `target` when a press lands on the border band of `edgeObject` (never from its middle), following only the
+-- touch / mouse that started it (another finger never takes over).
+function Hud.drag(edgeObject, target, connections)
     local dragInput, startPoint, startPosition
-    handle.InputBegan:Connect(function(input)
-        if dragInput or not isPress(input) then
+    table.insert(connections, UserInputService.InputBegan:Connect(function(input)
+        if dragInput or not isPress(input) or not edgeObject.Visible or not target.Visible then
+            return
+        end
+        local point = Vector2.new(input.Position.X, input.Position.Y)
+        if input.UserInputType ~= Enum.UserInputType.Touch then
+            point = pointerPosition()
+        end
+        if not nearEdge(point, edgeObject) then
             return
         end
         dragInput = input
-        startPoint = Vector2.new(input.Position.X, input.Position.Y)
+        startPoint = point
         startPosition = target.Position
-    end)
+    end))
     table.insert(connections, UserInputService.InputChanged:Connect(function(input)
         if not dragInput or not isMove(input) then
             return
@@ -5914,7 +6012,9 @@ function Hud.drag(handle, target, connections)
         if dragInput.UserInputType ~= Enum.UserInputType.Touch and input.UserInputType ~= Enum.UserInputType.MouseMovement then
             return
         end
-        local delta = Vector2.new(input.Position.X, input.Position.Y) - startPoint
+        -- Same source as the press point (touch position, or the inset-corrected mouse), so nothing jumps.
+        local point = input.UserInputType == Enum.UserInputType.Touch and Vector2.new(input.Position.X, input.Position.Y) or pointerPosition()
+        local delta = point - startPoint
         target.Position = UDim2.new(startPosition.X.Scale, startPosition.X.Offset + delta.X, startPosition.Y.Scale, startPosition.Y.Offset + delta.Y)
     end))
     table.insert(connections, UserInputService.InputEnded:Connect(function(input)
@@ -6466,7 +6566,7 @@ function Hud.stealCard(panel, list)
     corner(card.badge, UDim.new(1, 0))
     outlineStroke(card.badge, 1.5)
 
-    -- Text: name, then rarity pill + state dot, then value / weight chips.
+    -- Text: name, then the rarity pill, then value / weight chips.
     local textX, reserve = 84, 98
     card.name = shinyText(label({
         Position = UDim2.fromOffset(textX, 9),
@@ -6488,24 +6588,6 @@ function Hud.stealCard(panel, list)
         Parent = row,
     })
     card.rarityPill, card.rarityText, card.rarityGradient = Hud.pill(row, "", Hud.Grey, 1)
-    card.stateDot = create("Frame", {
-        Size = UDim2.fromOffset(8, 8),
-        BackgroundColor3 = Theme.Muted,
-        BorderSizePixel = 0,
-        LayoutOrder = 2,
-        Parent = row,
-    })
-    corner(card.stateDot, UDim.new(1, 0))
-    card.state = label({
-        Size = UDim2.new(0, 0, 1, 0),
-        AutomaticSize = Enum.AutomaticSize.X,
-        TextSize = 11,
-        FontFace = Fonts.Medium,
-        TextColor3 = Theme.Muted,
-        TextTruncate = Enum.TextTruncate.None,
-        LayoutOrder = 3,
-        Parent = row,
-    })
     local chips = create("Frame", {
         Position = UDim2.fromOffset(textX, 53),
         Size = UDim2.new(1, -(textX + reserve), 0, 18),
@@ -6521,7 +6603,7 @@ function Hud.stealCard(panel, list)
     })
     card.chips = chips
     card.valuePill, card.valueText = Hud.pill(chips, "", Hud.Green, 1)
-    card.infoPill, card.infoText = Hud.pill(chips, "", Hud.Grey, 2)
+    card.infoPill, card.infoText = Hud.pill(chips, "", Hud.Sky, 2)
 
     card.best = Hud.pill(frame, "BEST", Hud.Gold)
     card.best.AnchorPoint = Vector2.new(1, 0)
@@ -6586,7 +6668,7 @@ function Hud.stealCard(panel, list)
     return card
 end
 
--- item: { Id, Name, Icon, Badge, Rarity, RarityColor, State, StateColor, Value, Info, Featured, Queued, ActionText }
+-- item: { Id, Name, Icon, Badge, Rarity, RarityColor, Value, Info (weight, light blue), Featured, Queued, ActionText }
 function Hud.paintCard(card, item, order)
     card.id = item.Id
     local featured = item.Featured == true
@@ -6629,11 +6711,6 @@ function Hud.paintCard(card, item, order)
     card.rarityPill.Visible = item.Rarity ~= nil
     card.rarityText.Text = string.upper(tostring(item.Rarity or ""))
     Hud.setColors(card.rarityGradient, { rarityColor:Lerp(Color3.new(1, 1, 1), 0.35), rarityColor:Lerp(Style.Plate, 0.25) })
-    local stateColor = item.StateColor or Theme.Muted
-    card.stateDot.Visible = item.State ~= nil
-    card.stateDot.BackgroundColor3 = stateColor
-    card.state.Text = tostring(item.State or "")
-    card.state.TextColor3 = stateColor:Lerp(Theme.Text, 0.35)
 
     card.valuePill.Visible = item.Value ~= nil
     card.valueText.Text = tostring(item.Value or "")
@@ -6649,8 +6726,8 @@ function Hud.paintCard(card, item, order)
 end
 
 -- Steal HUD: a side panel listing things to take (featured first), each with STEAL and QUEUE; a tab on its inner
--- edge hides / shows it. opts: { Title, Subtitle, Icon, Side = "Right" | "Left", Width, Height, EmptyText, Hint,
--- OnSteal, OnQueue }.
+-- edge hides / shows it. opts: { Title, Subtitle, Side = "Right" | "Left", Width, Height, EmptyText, OnSteal,
+-- OnQueue }.
 function Library:CreateStealPanel(opts)
     opts = type(opts) == "table" and opts or {}
     local panel = { Collapsed = false, Visible = true, OnSteal = opts.OnSteal, OnQueue = opts.OnQueue, _cards = {}, _connections = {} }
@@ -6672,7 +6749,7 @@ function Library:CreateStealPanel(opts)
     Hud.autoScale(gui, holder, connections)
     local frame = Hud.plate(holder, { Size = UDim2.fromScale(1, 1), ClipsDescendants = true })
 
-    -- Header: a pink badge with the icon, title over a subtitle, the item count; a soft accent wash behind it.
+    -- Header: title over a subtitle, the item count; a soft accent wash behind it.
     local headerHeight = 62
     local header = create("Frame", { Size = UDim2.new(1, 0, 0, headerHeight), BackgroundColor3 = Theme.Accent, BackgroundTransparency = 0.82, BorderSizePixel = 0, Parent = frame })
     create("UIGradient", {
@@ -6680,34 +6757,16 @@ function Library:CreateStealPanel(opts)
         Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.2), NumberSequenceKeypoint.new(1, 1) }),
         Parent = header,
     })
-    local badge = create("Frame", {
-        AnchorPoint = Vector2.new(0, 0.5),
-        Position = UDim2.new(0, 14, 0.5, 0),
-        Size = UDim2.fromOffset(36, 36),
-        BackgroundTransparency = 1,
-        Parent = header,
-    })
-    buttonFace(badge, 1)
-    local badgeIcon = create("ImageLabel", {
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.new(0.5, 0, 0.5, -2),
-        Size = UDim2.fromOffset(18, 18),
-        BackgroundTransparency = 1,
-        ImageColor3 = Color3.new(1, 1, 1),
-        ZIndex = 3,
-        Parent = badge,
-    })
-    applyIcon(badgeIcon, opts.Icon or "hand-coins")
     local titleLabel = shinyText(label({
-        Position = UDim2.fromOffset(60, 12),
-        Size = UDim2.new(1, -130, 0, 20),
+        Position = UDim2.fromOffset(16, 12),
+        Size = UDim2.new(1, -90, 0, 20),
         Text = string.upper(opts.Title or "Steal"),
         TextSize = 16,
         Parent = header,
     }))
     label({
-        Position = UDim2.fromOffset(60, 33),
-        Size = UDim2.new(1, -130, 0, 15),
+        Position = UDim2.fromOffset(16, 33),
+        Size = UDim2.new(1, -90, 0, 15),
         Text = opts.Subtitle or "Best eggs on the field",
         TextSize = 12,
         FontFace = Fonts.Medium,
@@ -6717,7 +6776,7 @@ function Library:CreateStealPanel(opts)
     local countPill, countText = Hud.pill(header, "0", Hud.Bloom)
     countPill.AnchorPoint = Vector2.new(1, 0.5)
     countPill.Position = UDim2.new(1, -14, 0.5, 0)
-    Hud.drag(header, holder, connections)
+    Hud.drag(frame, holder, connections)
     local rule = create("Frame", {
         Position = UDim2.new(0, 14, 0, headerHeight),
         Size = UDim2.new(1, -28, 0, 2),
@@ -6734,7 +6793,7 @@ function Library:CreateStealPanel(opts)
         Parent = rule,
     })
 
-    local footerHeight = 26
+    local footerHeight = 6
     local list = create("ScrollingFrame", {
         Position = UDim2.fromOffset(0, headerHeight + 4),
         Size = UDim2.new(1, 0, 1, -(headerHeight + 4 + footerHeight)),
@@ -6771,18 +6830,6 @@ function Library:CreateStealPanel(opts)
         Parent = empty,
     })
 
-    label({
-        AnchorPoint = Vector2.new(0, 1),
-        Position = UDim2.new(0, 0, 1, -6),
-        Size = UDim2.new(1, 0, 0, 14),
-        Text = opts.Hint or "STEAL goes now  -  QUEUE adds it to the list",
-        TextSize = 11,
-        FontFace = Fonts.Medium,
-        TextColor3 = Theme.Muted,
-        TextXAlignment = Enum.TextXAlignment.Center,
-        Parent = frame,
-    })
-
     -- Hide / show tab on the inner edge: it stays on screen while the panel slides out.
     local tab = create("TextButton", {
         AnchorPoint = Vector2.new(right and 1 or 0, 0.5),
@@ -6806,13 +6853,33 @@ function Library:CreateStealPanel(opts)
     })
     applyIcon(arrow, right and "chevron-right" or "chevron-left")
 
+    -- Slides off the screen edge and back to wherever it was dragged to.
     function panel:SetCollapsed(value)
-        panel.Collapsed = value == true
-        local shift = panel.Collapsed and (holder.AbsoluteSize.X + 20) or 0
-        tween(holder, {
-            Position = UDim2.new(openPosition.X.Scale, openPosition.X.Offset + (right and shift or -shift), openPosition.Y.Scale, holder.Position.Y.Offset),
-        }, 0.35, Enum.EasingStyle.Quint)
-        tween(arrow, { Rotation = panel.Collapsed and 180 or 0 }, 0.25)
+        value = value == true
+        if value == panel.Collapsed then
+            return
+        end
+        panel.Collapsed = value
+        local goal
+        if value then
+            panel._restore = holder.Position
+            -- Push the panel just past the screen edge, leaving its tab fully on screen against that edge.
+            local screen = gui.AbsoluteSize.X
+            local left, holderWidth = holder.AbsolutePosition.X, holder.AbsoluteSize.X
+            local shift
+            if right then
+                local gap = left - (tab.AbsolutePosition.X + tab.AbsoluteSize.X)
+                shift = (screen - 2 + gap) - left
+            else
+                local gap = tab.AbsolutePosition.X - (left + holderWidth)
+                shift = (2 - gap) - (left + holderWidth)
+            end
+            goal = UDim2.new(holder.Position.X.Scale, holder.Position.X.Offset + shift, holder.Position.Y.Scale, holder.Position.Y.Offset)
+        else
+            goal = panel._restore or openPosition
+        end
+        tween(holder, { Position = goal }, 0.35, Enum.EasingStyle.Quint)
+        tween(arrow, { Rotation = value and 180 or 0 }, 0.25)
     end
     tab.MouseButton1Click:Connect(function()
         panel:SetCollapsed(not panel.Collapsed)

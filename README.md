@@ -65,7 +65,7 @@ local Steal = Library:CreateStealPanel({
 
 Steal:SetItems({
     { Id = "uid", Name = "Astral Jackalope", Icon = "rbxassetid://...", Badge = "rbxassetid://...",
-      Rarity = "Mythic", RarityColor = Color3.fromRGB(200, 120, 255), State = "In Forest",
+      Rarity = "Mythic", RarityColor = Color3.fromRGB(200, 120, 255),
       Value = "$30M/s", Info = "8 kg", Featured = true, Queued = 1, ActionText = "STEAL" },
 })
 Steal:SetCollapsed(true)             -- the red tab on its edge also toggles it
@@ -73,4 +73,15 @@ Steal:SetVisible(false)
 Steal:Destroy()
 ```
 
-Both HUDs scale with the screen, drag by their header and reuse their cards on every update.
+Both HUDs scale with the screen, drag by their edges and reuse their cards on every update.
+
+## Game font
+
+```lua
+local Window = Library:CreateWindow({ Name = "Bloom Hub", GameFont = true })  -- or GameFont = { Body = true }
+-- or at any time (restyles what is already on screen):
+Library:UseGameFont({ Body = false })
+```
+
+Picks the font family, weight and style most used by the game's own visible UI text. Windows and HUDs move only
+when grabbed by their edges.

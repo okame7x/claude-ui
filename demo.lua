@@ -6,6 +6,7 @@ local Window = Library:CreateWindow({
 	Name = "Bloom Hub",
 	LoadingSubtitle = "Demo",
 	ToggleUIKeybind = "RightControl",
+	GameFont = true, -- titles use the game's own font / text style
 	ConfigurationSaving = { Enabled = true, FolderName = "BloomHubDemo", FileName = "default" },
 })
 
@@ -199,10 +200,10 @@ local rarityColors = {
 	Rare = Color3.fromRGB(77, 255, 122),
 }
 local eggs = {
-	{ Id = "egg1", Name = "Astral Jackalope", Rarity = "Mythic", Value = "$30M/s", Info = "8 kg", State = "In Forest", Featured = true },
-	{ Id = "egg2", Name = "Golden Phoenix", Rarity = "Legendary", Value = "$4.2M/s", Info = "12 kg", State = "Carried by Bob", StateColor = Color3.fromRGB(255, 150, 60) },
-	{ Id = "egg3", Name = "Frost Wolf", Rarity = "Epic", Value = "$850K/s", Info = "6 kg", State = "In Jungle", Queued = 1 },
-	{ Id = "egg4", Name = "Moss Turtle", Rarity = "Rare", Value = "$120K/s", Info = "3 kg", State = "Dropped" },
+	{ Id = "egg1", Name = "Astral Jackalope", Rarity = "Mythic", Value = "$30M/s", Info = "8 kg", Featured = true },
+	{ Id = "egg2", Name = "Golden Phoenix", Rarity = "Legendary", Value = "$4.2M/s", Info = "12 kg" },
+	{ Id = "egg3", Name = "Frost Wolf", Rarity = "Epic", Value = "$850K/s", Info = "6 kg", Queued = 1 },
+	{ Id = "egg4", Name = "Moss Turtle", Rarity = "Rare", Value = "$120K/s", Info = "3 kg" },
 }
 for _, egg in eggs do
 	egg.RarityColor = rarityColors[egg.Rarity]
