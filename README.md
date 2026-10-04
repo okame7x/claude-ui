@@ -1,8 +1,8 @@
 # Bloom Hub UI
 
-Roblox UI library for Bloom Hub: the Bloom UI structure with the Chilli Library look (Gotham SSm titles with the
-game's black outline, shiny headers, red Rebirth buttons, green toggles, collapsible sections, right-side tabs, a
-clean floating icon), plus Status and Steal HUD templates.
+Roblox UI library for Bloom Hub: dark plum surfaces with a blossom pink accent, Gotham SSm titles with an ink
+outline, shiny headers, pink gradient buttons, collapsible sections, right-side tabs and a clean floating icon, plus
+Status and Steal HUD templates.
 
 ## Load
 

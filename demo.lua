@@ -1,4 +1,4 @@
--- Bloom Hub UI demo: every element, Chilli-style sections, right-side tabs, and the Status / Steal HUD templates
+-- Bloom Hub UI demo: every element, collapsible sections, right-side tabs, and the Status / Steal HUD templates
 -- fed with fake data. Everything only prints / notifies.
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/okame7x/claude-ui/main/claudeui.lua"))()
 
@@ -70,7 +70,7 @@ Eggs:CreateDropdown({
 })
 Eggs:CreateButton({
 	Name = "Sell Inventory",
-	Desc = "Rebirth-style button",
+	Desc = "Bloom button",
 	Icon = "coins",
 	Callback = function()
 		notify("Sell", "Sold everything (demo)")
@@ -145,9 +145,9 @@ Alerts:CreateButton({
 		})
 	end,
 })
-Alerts:CreateText({ Name = "About", Text = "Mix of the Ghost Pepper UI and the Chilli Library look." })
+Alerts:CreateText({ Name = "About", Text = "Bloom Hub UI: dark plum, blossom pink, clean and compact." })
 
--- Right side tabs (Chilli's Side = "Right") gather under MORE at the end of the sidebar.
+-- Right side tabs (Side = "Right") gather under MORE at the end of the sidebar.
 local Settings = Window:CreateTab({ Name = "Settings", Icon = "settings", Side = "Right" })
 local Interface = Settings:CreateSection({ Name = "Interface" })
 Interface:CreateKeybind({
@@ -175,7 +175,7 @@ Interface:CreateButton({
 local Credits = Window:CreateTab({ Name = "Credits", Icon = "heart", Side = "Right" })
 Credits:CreateSection({ Name = "Made with" }):CreateParagraph({
 	Title = "Bloom Hub",
-	Content = "Bloom UI structure with the Chilli Library style: shiny titles, Rebirth buttons, green toggles.",
+	Content = "Shiny titles, blossom buttons, collapsible sections and the Status / Steal HUDs.",
 })
 
 -- HUD templates with fake data (the real hub fills these from the game).
@@ -190,7 +190,7 @@ local Steal = Library:CreateStealPanel({
 		notify("Queue", "Queued " .. tostring(id))
 	end,
 })
-Status:SetStat("STOLEN", 0, { Color3.fromRGB(255, 132, 123), Color3.fromRGB(239, 28, 28) })
+Status:SetStat("STOLEN", 0, { Color3.fromRGB(255, 150, 205), Color3.fromRGB(214, 52, 136) })
 
 local rarityColors = {
 	Legendary = Color3.fromRGB(255, 196, 60),

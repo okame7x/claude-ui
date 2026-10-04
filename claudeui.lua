@@ -72,20 +72,24 @@ local function finishElement(tab, opts, element, frame, kind)
     return element
 end
 
+-- Bloom: deep plum surfaces, a blossom pink accent with a lilac partner. Outline is the near-black ink every
+-- heading, card and button is drawn with.
 Library.Theme = {
-    Background = Color3.fromRGB(18, 17, 20),
-    Surface = Color3.fromRGB(24, 22, 25),
-    Surface2 = Color3.fromRGB(30, 27, 31),
-    Surface3 = Color3.fromRGB(45, 39, 43),
-    Stroke = Color3.fromRGB(58, 43, 48),
-    StrokeHover = Color3.fromRGB(180, 67, 78),
-    Accent = Color3.fromRGB(241, 82, 94),
-    AccentDark = Color3.fromRGB(31, 14, 18),
-    Text = Color3.fromRGB(245, 240, 241),
-    Muted = Color3.fromRGB(165, 147, 151),
-    Warning = Color3.fromRGB(240, 176, 108),
-    Success = Color3.fromRGB(150, 220, 170),
-    Error = Color3.fromRGB(240, 120, 120),
+    Background = Color3.fromRGB(17, 13, 22),
+    Surface = Color3.fromRGB(23, 18, 29),
+    Surface2 = Color3.fromRGB(30, 23, 38),
+    Surface3 = Color3.fromRGB(46, 35, 57),
+    Stroke = Color3.fromRGB(70, 50, 84),
+    StrokeHover = Color3.fromRGB(255, 110, 180),
+    Accent = Color3.fromRGB(255, 99, 170),
+    Accent2 = Color3.fromRGB(178, 120, 255),
+    AccentDark = Color3.fromRGB(42, 12, 30),
+    Text = Color3.fromRGB(250, 242, 248),
+    Muted = Color3.fromRGB(180, 158, 184),
+    Outline = Color3.fromRGB(14, 6, 12),
+    Warning = Color3.fromRGB(255, 196, 100),
+    Success = Color3.fromRGB(120, 230, 160),
+    Error = Color3.fromRGB(255, 110, 130),
 }
 
 Library.Assets = {
@@ -226,7 +230,7 @@ end
 local BUTTON_HINT_ICON = "chevron-right"
 
 local FONT_FAMILY = "rbxasset://fonts/families/BuilderSans.json"
--- Chilli's heading face: Gotham SSm ExtraBold for titles, section heads and pills; body text stays Builder Sans.
+-- Heading face: Gotham SSm ExtraBold for titles, section heads and pills; body text stays Builder Sans.
 local TITLE_FAMILY = "rbxasset://fonts/families/GothamSSm.json"
 Library.Fonts = {
     Regular = Font.new(FONT_FAMILY, Enum.FontWeight.Regular),
@@ -333,12 +337,12 @@ local function label(props)
         defaults[key] = value
     end
     local text = create("TextLabel", defaults)
-    -- Chilli: headings in Gotham SSm ExtraBold carry the game's black text outline; body text stays plain.
+    -- Headings in Gotham SSm ExtraBold carry an ink outline so they read over anything; body text stays plain.
     if defaults.FontFace == Fonts.Title then
         create("UIStroke", {
             Name = "Outline",
             ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
-            Color = Color3.new(0, 0, 0),
+            Color = Theme.Outline,
             Thickness = 1.2,
             LineJoinMode = Enum.LineJoinMode.Round,
             Parent = text,
@@ -347,42 +351,41 @@ local function label(props)
     return text
 end
 
--- Chilli Library styling (the game's own Settings menu look): copied gradients and stroke recipes.
-local Chilli = {
-    -- Pink to red "Rebirth" button face, darker red lip under it.
-    RebirthOuter = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 193, 194)),
-        ColorSequenceKeypoint.new(0.0570934266, Color3.fromRGB(255, 132, 123)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(239, 28, 28)),
+-- Bloom styling shared by the window and the HUDs: button gradients, the accent, the shiny heading recipe.
+local Style = {
+    -- Button face: blush highlight at the top running into blossom pink, a deeper rose lip under it.
+    ButtonFace = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 208, 232)),
+        ColorSequenceKeypoint.new(0.06, Color3.fromRGB(255, 140, 198)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(226, 58, 140)),
     }),
-    RebirthInner = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 193, 194)),
-        ColorSequenceKeypoint.new(0.0155709349, Color3.fromRGB(255, 132, 123)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(239, 28, 28)),
+    ButtonShine = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 208, 232)),
+        ColorSequenceKeypoint.new(0.016, Color3.fromRGB(255, 140, 198)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(226, 58, 140)),
     }),
-    RebirthBase = Color3.fromRGB(175, 0, 0),
-    -- Green accent (on states, chevrons).
-    Accent = ColorSequence.new(Color3.fromRGB(58, 255, 55), Color3.fromRGB(20, 109, 0)),
-    AccentColor = Color3.fromRGB(58, 255, 55),
-    -- Shiny heading text: white with a soft break, dark blue outline.
+    ButtonBase = Color3.fromRGB(150, 24, 90),
+    -- Accent for "on" states and chevrons.
+    Accent = ColorSequence.new(Theme.Accent, Theme.Accent2),
+    AccentColor = Theme.Accent,
+    -- Shiny heading text: white with a soft break, a plum outline.
     ShinyText = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(0.486159176, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(0.519031167, Color3.fromRGB(221, 221, 221)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(236, 236, 236)),
+        ColorSequenceKeypoint.new(0.486, Color3.fromRGB(255, 255, 255)),
+        ColorSequenceKeypoint.new(0.519, Color3.fromRGB(236, 224, 234)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(246, 236, 244)),
     }),
-    ShinyStroke = ColorSequence.new(Color3.fromRGB(0, 36, 84), Color3.fromRGB(0, 31, 54)),
-    Plate = Color3.fromRGB(0, 0, 0),
-    PlateTransparency = 0.5,
+    ShinyStroke = ColorSequence.new(Color3.fromRGB(86, 16, 62), Color3.fromRGB(46, 8, 34)),
+    Plate = Color3.fromRGB(8, 4, 10),
 }
-Library.Chilli = Chilli
+Library.Style = Style
 
--- Thick black outline that scales with the element (Chilli's addScaledStroke, offset thickness here).
-local function chilliStroke(parent, thickness, mode)
+-- Ink outline that frames cards, buttons and panels (rest colour Theme.Outline).
+local function outlineStroke(parent, thickness, mode)
     local outline = create("UIStroke", {
-        Name = "ChilliOutline",
+        Name = "Outline",
         ApplyStrokeMode = mode or Enum.ApplyStrokeMode.Border,
-        Color = Color3.new(0, 0, 0),
+        Color = Theme.Outline,
         LineJoinMode = Enum.LineJoinMode.Round,
         Thickness = thickness or 2,
         Parent = parent,
@@ -390,11 +393,11 @@ local function chilliStroke(parent, thickness, mode)
     return outline
 end
 
-local function chilliGradient(parent, color, name)
-    return create("UIGradient", { Name = name or "ChilliGradient", Color = color, Rotation = 90, Parent = parent })
+local function verticalGradient(parent, color, name)
+    return create("UIGradient", { Name = name or "Gradient", Color = color, Rotation = 90, Parent = parent })
 end
 
--- Chilli's applyShinyTextStyle: white vertical gradient on the text, dark blue gradient on its outline.
+-- Shiny heading: white vertical gradient on the text, a plum gradient on its outline.
 local function shinyText(text)
     text.FontFace = Fonts.Title
     text.TextColor3 = Color3.new(1, 1, 1)
@@ -407,15 +410,15 @@ local function shinyText(text)
     outline.Color = Color3.new(1, 1, 1)
     outline.Thickness = 1.6
     if not outline:FindFirstChild("StrokeStyleGradient") then
-        chilliGradient(outline, Chilli.ShinyStroke, "StrokeStyleGradient")
+        verticalGradient(outline, Style.ShinyStroke, "StrokeStyleGradient")
     end
     if not text:FindFirstChild("TextStyleGradient") then
-        chilliGradient(text, Chilli.ShinyText, "TextStyleGradient")
+        verticalGradient(text, Style.ShinyText, "TextStyleGradient")
     end
     return text
 end
 
--- Chilli's attachScaleFeedback: grows a little on hover, squeezes on press.
+-- Grows a little on hover, squeezes on press.
 local function scaleFeedback(button, hoverScale, pressScale)
     local scale = button:FindFirstChild("InteractionScale") or create("UIScale", { Name = "InteractionScale", Parent = button })
     local hovered = false
@@ -437,21 +440,21 @@ local function scaleFeedback(button, hoverScale, pressScale)
     return scale
 end
 
--- Chilli's Rebirth button face inside `parent` (a red lip, the gradient face, an inner highlight). Returns the face.
-local function rebirthFace(parent, zIndex)
+-- Bloom button face inside `parent`: a rose lip, the pink gradient face over it, an inner shine. Returns base, face.
+local function buttonFace(parent, zIndex)
     zIndex = zIndex or 1
     local base = create("Frame", {
-        Name = "RebirthBase",
+        Name = "ButtonBase",
         Size = UDim2.fromScale(1, 1),
-        BackgroundColor3 = Chilli.RebirthBase,
+        BackgroundColor3 = Style.ButtonBase,
         BorderSizePixel = 0,
         ZIndex = zIndex,
         Parent = parent,
     })
     corner(base)
-    chilliStroke(base, 2)
+    outlineStroke(base, 2)
     local face = create("Frame", {
-        Name = "RebirthFace",
+        Name = "ButtonFace",
         Size = UDim2.new(1, 0, 1, -4),
         BackgroundColor3 = Color3.new(1, 1, 1),
         BorderSizePixel = 0,
@@ -459,9 +462,9 @@ local function rebirthFace(parent, zIndex)
         Parent = base,
     })
     corner(face)
-    chilliGradient(face, Chilli.RebirthOuter, "RedGradient")
+    verticalGradient(face, Style.ButtonFace, "FaceGradient")
     local highlight = create("Frame", {
-        Name = "RebirthHighlight",
+        Name = "ButtonShine",
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.fromScale(0.5, 0.5),
         Size = UDim2.new(1, -6, 1, -6),
@@ -471,7 +474,7 @@ local function rebirthFace(parent, zIndex)
         Parent = face,
     })
     corner(highlight, UDim.new(0, 6))
-    chilliGradient(highlight, Chilli.RebirthInner, "RedGradient")
+    verticalGradient(highlight, Style.ButtonShine, "FaceGradient")
     return base, face
 end
 
@@ -669,7 +672,7 @@ local function flashStroke(strokeObject)
     end)
 end
 
--- Rest colour comes from the stroke itself (Chilli cards rest on their black outline, the rest on Theme.Stroke).
+-- Rest colour comes from the stroke itself (cards rest on their ink outline, the rest on Theme.Stroke).
 local function hoverStroke(target, strokeObject)
     target.MouseEnter:Connect(function()
         tween(strokeObject, { Color = Theme.StrokeHover }, 0.12)
@@ -742,12 +745,12 @@ local function card(tab, className, height, opts)
     local frame = create(className, props)
     frame:SetAttribute("NoDrag", true)
     corner(frame)
-    -- Chilli's row plate (half-transparent black, thick black outline) over the theme's surface; the outline is also
+    -- Row plate (the theme's surface darkened, a thick ink outline); the outline is also
     -- the hover / flash ring and rests black again afterwards.
-    frame.BackgroundColor3 = Theme.Surface2:Lerp(Chilli.Plate, 0.35)
+    frame.BackgroundColor3 = Theme.Surface2:Lerp(Style.Plate, 0.35)
     frame.BackgroundTransparency = 0.15
-    local frameStroke = chilliStroke(frame, 2.5)
-    frameStroke:SetAttribute("RestColor", Color3.new(0, 0, 0))
+    local frameStroke = outlineStroke(frame, 2.5)
+    frameStroke:SetAttribute("RestColor", Theme.Outline)
     -- Soft top-to-bottom gloss on every card (named, so a card with its own gradient can drop it).
     create("UIGradient", {
         Name = "Gloss",
@@ -977,7 +980,7 @@ function Tab:Button(opts)
     local button, buttonStroke = card(self, "TextButton", height, opts)
     button.ClipsDescendants = true
 
-    -- Chilli's Rebirth button: the red gradient face carries the look, the card plate goes see-through. Primary
+    -- Bloom button: the pink gradient face carries the look, the card plate goes see-through. Primary
     -- buttons get the brighter inner highlight on hover.
     button.BackgroundTransparency = 1
     buttonStroke.Transparency = 1
@@ -985,13 +988,13 @@ function Tab:Button(opts)
     if gloss then
         gloss:Destroy()
     end
-    local base, face = rebirthFace(button, 0)
+    local base, face = buttonFace(button, 0)
     button.MouseEnter:Connect(function()
         tween(face, { BackgroundTransparency = 0 }, 0.12)
-        tween(base, { BackgroundColor3 = primary and Chilli.RebirthBase:Lerp(Color3.new(1, 1, 1), 0.15) or Chilli.RebirthBase }, 0.12)
+        tween(base, { BackgroundColor3 = primary and Style.ButtonBase:Lerp(Color3.new(1, 1, 1), 0.15) or Style.ButtonBase }, 0.12)
     end)
     button.MouseLeave:Connect(function()
-        tween(base, { BackgroundColor3 = Chilli.RebirthBase }, 0.25)
+        tween(base, { BackgroundColor3 = Style.ButtonBase }, 0.25)
     end)
 
     local textColor = Color3.new(1, 1, 1)
@@ -1042,7 +1045,7 @@ function Tab:Toggle(opts)
         Parent = button,
     })
     corner(pill, UDim.new(1, 0))
-    chilliStroke(pill, 2)
+    outlineStroke(pill, 2)
 
     local knob = create("Frame", {
         AnchorPoint = Vector2.new(0, 0.5),
@@ -1059,12 +1062,12 @@ function Tab:Toggle(opts)
         Size = UDim2.new(1, 24, 1, 24),
         BackgroundTransparency = 1,
         Image = Assets.Glow,
-        ImageColor3 = Chilli.AccentColor,
+        ImageColor3 = Style.AccentColor,
         ImageTransparency = 1,
         ZIndex = 0,
         Parent = pill,
     })
-    chilliStroke(knob, 1.5)
+    outlineStroke(knob, 1.5)
 
     -- Gloss on the switch.
     create("UIGradient", {
@@ -1078,8 +1081,8 @@ function Tab:Toggle(opts)
     local function render(animate)
         local on = self_.Value
         local duration = animate and 0.25 or 0
-        -- Chilli's green for "on"; the knob goes white like the game's switches.
-        tween(pill, { BackgroundColor3 = on and Chilli.AccentColor or Theme.Surface3 }, duration)
+        -- Accent pink for "on"; the knob goes white.
+        tween(pill, { BackgroundColor3 = on and Style.AccentColor or Theme.Surface3 }, duration)
         tween(pillGlow, { ImageTransparency = on and 0.75 or 1 }, duration)
         local knobSize = TOUCH and 18 or 14
         tween(knob, {
@@ -2731,8 +2734,8 @@ function Library.Window(_, opts)
     })
     self.Body = body
     corner(body, UDim.new(0, 10))
-    -- Chilli's frame: the thick black outline of the game's menus (only its transparency is animated elsewhere).
-    self.BodyStroke = stroke(body, Color3.new(0, 0, 0), 0, 3)
+    -- Thick ink frame around the window (only its transparency is animated elsewhere).
+    self.BodyStroke = stroke(body, Theme.Outline, 0, 3)
     self.BodyStroke.LineJoinMode = Enum.LineJoinMode.Round
     edgeHighlight(body)
 
@@ -3470,7 +3473,7 @@ function Window:_createOpenButton(opts)
         ZIndex = 30,
         Parent = gui,
     })
-    -- Clean disc (the current UI's): white face, the logo in its own colours, Chilli's black outline. No halos and
+    -- Clean disc: white face, the logo in its own colours, a soft blossom ring. No halos and
     -- nothing per frame; the only movement is the input-driven hover / press scale below.
     local face = create("Frame", {
         Size = UDim2.fromScale(1, 1),
@@ -3480,7 +3483,23 @@ function Window:_createOpenButton(opts)
         Parent = button,
     })
     corner(face, UDim.new(1, 0))
-    chilliStroke(face, 2.5)
+    -- Blossom ring: pink into lilac across the disc, static (no per-frame work).
+    local ring = create("UIStroke", {
+        Name = "Ring",
+        Thickness = 3,
+        Color = Color3.new(1, 1, 1),
+        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+        Parent = face,
+    })
+    create("UIGradient", {
+        Rotation = 45,
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Theme.Accent),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 170, 214)),
+            ColorSequenceKeypoint.new(1, Theme.Accent2),
+        }),
+        Parent = ring,
+    })
     local icon = create("ImageLabel", {
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.fromScale(0.5, 0.5),
@@ -4316,7 +4335,7 @@ function Window:Tab(opts, icon)
         _rightSide = opts.Side == "Right",
     }, Tab)
 
-    -- Chilli's Side = "Right": those tabs gather in a second group at the end of the sidebar, under a small label.
+    -- Side = "Right": those tabs gather in a second group at the end of the sidebar, under a small label.
     local right = opts.Side == "Right"
     self._rightTabs = self._rightTabs or 0
     if right and self._rightTabs == 0 then
@@ -4335,7 +4354,7 @@ function Window:Tab(opts, icon)
 
     local button = create("TextButton", {
         Size = UDim2.new(1, 0, 0, 38),
-        BackgroundColor3 = Chilli.Plate,
+        BackgroundColor3 = Style.Plate,
         BackgroundTransparency = 1,
         Text = "",
         AutoButtonColor = false,
@@ -4343,21 +4362,21 @@ function Window:Tab(opts, icon)
         Parent = self.TabList,
     })
     corner(button)
-    local buttonStroke = chilliStroke(button, 2)
+    local buttonStroke = outlineStroke(button, 2)
     buttonStroke.Transparency = 1
-    buttonStroke:SetAttribute("RestColor", Color3.new(0, 0, 0))
+    buttonStroke:SetAttribute("RestColor", Theme.Outline)
     scaleFeedback(button, 1.03, 0.96)
     tab._button = button
-    -- Selected tab: Chilli's red Rebirth face fading in behind the label (shown by SelectTab).
-    local rebirth = create("CanvasGroup", {
+    -- Selected tab: the pink button face fading in behind the label (shown by SelectTab).
+    local selectedFace = create("CanvasGroup", {
         Size = UDim2.fromScale(1, 1),
         BackgroundTransparency = 1,
         GroupTransparency = 1,
         ZIndex = 0,
         Parent = button,
     })
-    rebirthFace(rebirth, 0)
-    tab._rebirth = rebirth
+    buttonFace(selectedFace, 0)
+    tab._selectedFace = selectedFace
 
     local hasIcon = opts.Icon ~= nil
     if hasIcon then
@@ -4743,8 +4762,8 @@ function Window:SelectTab(tab)
         tween(previous._button, { BackgroundTransparency = 1 }, 0.2)
         tween(previous._stroke, { Transparency = 1 }, 0.2)
         tween(previous._label, { TextColor3 = Theme.Muted }, 0.2)
-        if previous._rebirth then
-            tween(previous._rebirth, { GroupTransparency = 1 }, 0.2)
+        if previous._selectedFace then
+            tween(previous._selectedFace, { GroupTransparency = 1 }, 0.2)
         end
         if previous._icon then
             tween(previous._icon, { ImageColor3 = Theme.Muted }, 0.2)
@@ -4763,12 +4782,12 @@ function Window:SelectTab(tab)
         end)
     end
 
-    -- The Rebirth face is the selected look, so the plate itself stays clear.
+    -- The button face is the selected look, so the plate itself stays clear.
     tween(tab._button, { BackgroundTransparency = 1 }, 0.2)
     tween(tab._stroke, { Transparency = 1 }, 0.2)
     tween(tab._label, { TextColor3 = Color3.new(1, 1, 1) }, 0.2)
-    if tab._rebirth then
-        tween(tab._rebirth, { GroupTransparency = 0 }, 0.2)
+    if tab._selectedFace then
+        tween(tab._selectedFace, { GroupTransparency = 0 }, 0.2)
     end
     if tab._icon then
         tween(tab._icon, { ImageColor3 = Color3.new(1, 1, 1) }, 0.2)
@@ -5070,7 +5089,7 @@ local function addSetValueAlias(handle)
     return handle
 end
 
--- Chilli's collapsible section: a header plate with shiny text and a green chevron, the rows below it. text may be
+-- Collapsible section: a header plate with shiny text and an accent chevron, the rows below it. text may be
 -- a string or { Name, Expanded }; Expanded defaults to the tab's SectionsExpanded (true when unset).
 function Tab:AddSection(text)
     local expanded = self._sectionsExpanded ~= false
@@ -5096,7 +5115,7 @@ function Tab:AddSection(text)
 
     local heading = create("TextButton", {
         Size = UDim2.new(1, 0, 0, 32),
-        BackgroundColor3 = Chilli.Plate,
+        BackgroundColor3 = Style.Plate,
         BackgroundTransparency = 0.35,
         BorderSizePixel = 0,
         AutoButtonColor = false,
@@ -5106,7 +5125,7 @@ function Tab:AddSection(text)
     })
     heading:SetAttribute("NoDrag", true)
     corner(heading)
-    chilliStroke(heading, 2.5)
+    outlineStroke(heading, 2.5)
     scaleFeedback(heading, 1.01, 0.98)
     local headingText = label({
         Position = UDim2.fromOffset(12, 0),
@@ -5121,7 +5140,7 @@ function Tab:AddSection(text)
         Position = UDim2.new(1, -12, 0.5, 0),
         Size = UDim2.fromOffset(16, 16),
         BackgroundTransparency = 1,
-        ImageColor3 = Chilli.AccentColor,
+        ImageColor3 = Style.AccentColor,
         ScaleType = Enum.ScaleType.Fit,
         Parent = heading,
     })
@@ -5799,7 +5818,7 @@ function Tab:AddAssetLogItem(item)
 end
 
 Window.AddTab = Window.Tab
--- Chilli Library names: CreateSection is the collapsible section ({ Name, Expanded }), CreateText a titled note.
+-- Create* names: CreateSection is the collapsible section ({ Name, Expanded }), CreateText a titled note.
 Tab.CreateSection = Tab.AddSection
 Tab.CreateLabel = Tab.Label
 Tab.CreateParagraph = Tab.Paragraph
@@ -5825,7 +5844,7 @@ end
 
 -- Bloom HUD templates: Status (what the hub is doing) and Steal (things to take). The library only draws them; the
 -- hub pushes its data with status:Set(info) and steal:SetItems(items). Both sit in their own ScreenGui, scale with
--- the screen (designed at 1280x720), can be dragged by their header and use the Chilli look of the window.
+-- the screen (designed at 1280x720), can be dragged by their header and share the look of the window.
 local Hud = {
     StateColors = {
         active = { Color3.fromRGB(58, 255, 55), Color3.fromRGB(20, 140, 30) },
@@ -5835,7 +5854,9 @@ local Hud = {
     StateWords = { active = "WORKING", waiting = "WAITING", idle = "IDLE" },
     Red = { Color3.fromRGB(255, 132, 123), Color3.fromRGB(239, 28, 28) },
     Green = { Color3.fromRGB(58, 255, 55), Color3.fromRGB(20, 109, 0) },
-    Grey = { Color3.fromRGB(206, 212, 224), Color3.fromRGB(110, 116, 132) },
+    Grey = { Color3.fromRGB(218, 204, 222), Color3.fromRGB(122, 100, 130) },
+    Bloom = { Color3.fromRGB(255, 150, 205), Color3.fromRGB(214, 52, 136) },
+    Lilac = { Color3.fromRGB(206, 170, 255), Color3.fromRGB(130, 76, 220) },
     Gold = { Color3.fromRGB(255, 214, 84), Color3.fromRGB(255, 150, 20) },
 }
 Library.Hud = Hud
@@ -5906,10 +5927,10 @@ function Hud.drag(handle, target, connections)
     end))
 end
 
--- Panel plate: the window's dark surface, a soft gloss and Chilli's thick black outline.
+-- Panel plate: the window's dark surface, a soft gloss and the thick ink outline.
 function Hud.plate(parent, props)
     local frame = create("Frame", {
-        BackgroundColor3 = Theme.Background:Lerp(Chilli.Plate, 0.35),
+        BackgroundColor3 = Theme.Background:Lerp(Style.Plate, 0.35),
         BackgroundTransparency = 0.06,
         BorderSizePixel = 0,
         Parent = parent,
@@ -5918,7 +5939,7 @@ function Hud.plate(parent, props)
         frame[key] = value
     end
     corner(frame, UDim.new(0, 12))
-    chilliStroke(frame, 3)
+    outlineStroke(frame, 3)
     create("UIGradient", {
         Name = "Gloss",
         Rotation = 90,
@@ -5931,7 +5952,7 @@ end
 -- Small inset (icon wells, stat tiles, bar tracks): half-transparent black with a black outline.
 function Hud.inset(parent, props, radius)
     local frame = create("Frame", {
-        BackgroundColor3 = Chilli.Plate,
+        BackgroundColor3 = Style.Plate,
         BackgroundTransparency = 0.45,
         BorderSizePixel = 0,
         Parent = parent,
@@ -5940,7 +5961,7 @@ function Hud.inset(parent, props, radius)
         frame[key] = value
     end
     corner(frame, radius or UDim.new(0, 8))
-    chilliStroke(frame, 2)
+    outlineStroke(frame, 2)
     return frame
 end
 
@@ -5955,8 +5976,8 @@ function Hud.pill(parent, text, colors, layoutOrder)
         Parent = parent,
     })
     corner(frame, UDim.new(1, 0))
-    chilliStroke(frame, 1.5)
-    local gradient = chilliGradient(frame, ColorSequence.new(colors[1], colors[2]))
+    outlineStroke(frame, 1.5)
+    local gradient = verticalGradient(frame, ColorSequence.new(colors[1], colors[2]))
     padding(frame, 8, 8)
     local text_ = label({
         Size = UDim2.new(0, 0, 1, 0),
@@ -6044,7 +6065,7 @@ function Library:CreateStatus(opts)
         Parent = frame,
     })
     corner(edge, UDim.new(1, 0))
-    local edgeGradient = chilliGradient(edge, ColorSequence.new(Hud.StateColors.idle[1], Hud.StateColors.idle[2]))
+    local edgeGradient = verticalGradient(edge, ColorSequence.new(Hud.StateColors.idle[1], Hud.StateColors.idle[2]))
 
     local well = Hud.inset(frame, {
         Position = UDim2.fromOffset(16, 14),
@@ -6087,7 +6108,7 @@ function Library:CreateStatus(opts)
         Parent = pills,
     })
     local _, stateText, stateGradient = Hud.pill(pills, "IDLE", Hud.StateColors.idle, 1)
-    local tagPill, tagText = Hud.pill(pills, "", Hud.Red, 2)
+    local tagPill, tagText = Hud.pill(pills, "", Hud.Lilac, 2)
     tagPill.Visible = false
 
     local title = shinyText(label({
@@ -6137,7 +6158,7 @@ function Library:CreateStatus(opts)
         Parent = barTrack,
     })
     corner(barFill, UDim.new(1, 0))
-    local barGradient = chilliGradient(barFill, ColorSequence.new(Hud.Green[1], Hud.Green[2]))
+    local barGradient = verticalGradient(barFill, ColorSequence.new(Hud.Bloom[1], Hud.Bloom[2]))
     local barText = label({
         Size = UDim2.fromScale(1, 1),
         Text = "",
@@ -6151,7 +6172,7 @@ function Library:CreateStatus(opts)
         AnchorPoint = Vector2.new(0, 0.5),
         Position = UDim2.new(0, 8, 0, 6),
         Size = UDim2.new(1, -16, 0, 4),
-        BackgroundColor3 = Chilli.Plate,
+        BackgroundColor3 = Style.Plate,
         BackgroundTransparency = 0.45,
         BorderSizePixel = 0,
         Parent = steps,
@@ -6164,7 +6185,7 @@ function Library:CreateStatus(opts)
         Parent = stepLine,
     })
     corner(stepFill, UDim.new(1, 0))
-    chilliGradient(stepFill, ColorSequence.new(Hud.Green[1], Hud.Green[2]))
+    verticalGradient(stepFill, ColorSequence.new(Hud.Bloom[1], Hud.Bloom[2]))
     local stepNodes = {}
 
     -- Stat tiles on the right.
@@ -6203,7 +6224,7 @@ function Library:CreateStatus(opts)
                 TextXAlignment = Enum.TextXAlignment.Right,
                 Parent = frame_,
             })
-            tile = { value = valueLabel, gradient = chilliGradient(valueLabel, ColorSequence.new(Hud.Green[1], Hud.Green[2])) }
+            tile = { value = valueLabel, gradient = verticalGradient(valueLabel, ColorSequence.new(Hud.Green[1], Hud.Green[2])) }
             status._stats[name] = tile
         end
         tile.value.Text = tostring(value)
@@ -6238,7 +6259,7 @@ function Library:CreateStatus(opts)
                     Parent = steps,
                 })
                 corner(dot, UDim.new(1, 0))
-                chilliStroke(dot, 2)
+                outlineStroke(dot, 2)
                 local caption = label({
                     AnchorPoint = Vector2.new(x, 0),
                     Position = UDim2.new(x, 0, 0, 11),
@@ -6256,8 +6277,8 @@ function Library:CreateStatus(opts)
         tween(stepFill, { Size = UDim2.fromScale(#names > 1 and (current - 1) / (#names - 1) or 1, 1) }, 0.25)
         for index, node in stepNodes do
             local done, now = index < current, index == current
-            node.dot.BackgroundColor3 = done and Hud.Green[1] or (now and Color3.new(1, 1, 1) or Color3.fromRGB(60, 58, 66))
-            node.caption.TextColor3 = now and Color3.new(1, 1, 1) or (done and Hud.Green[1] or Theme.Muted)
+            node.dot.BackgroundColor3 = done and Hud.Bloom[1] or (now and Color3.new(1, 1, 1) or Theme.Surface3)
+            node.caption.TextColor3 = now and Color3.new(1, 1, 1) or (done and Hud.Bloom[1] or Theme.Muted)
         end
     end
 
@@ -6267,7 +6288,7 @@ function Library:CreateStatus(opts)
             return
         end
         tween(barFill, { Size = UDim2.fromScale(math.clamp(tonumber(info.Fraction) or 0, 0, 1), 1) }, 0.25)
-        Hud.setColors(barGradient, info.Colors or Hud.Green)
+        Hud.setColors(barGradient, info.Colors or Hud.Bloom)
         barText.Text = info.Text or ""
     end
 
@@ -6366,75 +6387,128 @@ function Library:CreateStatus(opts)
     return status
 end
 
--- One pooled steal card (reused by SetItems, so a refresh never rebuilds the list).
+-- One pooled steal card (reused by SetItems, so a refresh never rebuilds the list). Its plate is white so the
+-- rarity tint gradient shows its real colours; the left bar, the icon ring and the glow take the rarity too.
 function Hud.stealCard(panel, list)
     local card = {}
     local frame = create("Frame", {
-        Size = UDim2.new(1, 0, 0, 74),
-        BackgroundColor3 = Theme.Surface2:Lerp(Chilli.Plate, 0.35),
-        BackgroundTransparency = 0.08,
+        Size = UDim2.new(1, 0, 0, 80),
+        BackgroundColor3 = Color3.new(1, 1, 1),
         BorderSizePixel = 0,
         Parent = list,
     })
-    corner(frame, UDim.new(0, 10))
-    chilliStroke(frame, 2.5)
-    create("UIGradient", {
-        Name = "Gloss",
-        Rotation = 90,
-        Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(176, 170, 178)),
+    corner(frame, UDim.new(0, 12))
+    card.frame = frame
+    card.stroke = outlineStroke(frame, 2.5)
+    card.tint = create("UIGradient", {
+        Rotation = 0,
+        Color = ColorSequence.new(Theme.Surface2, Theme.Surface2),
         Parent = frame,
     })
-    card.frame = frame
+    frame.MouseEnter:Connect(function()
+        tween(card.stroke, { Color = Theme.StrokeHover }, 0.12)
+    end)
+    frame.MouseLeave:Connect(function()
+        tween(card.stroke, { Color = card.restColor or Theme.Outline }, 0.25)
+    end)
+
     local accent = create("Frame", {
-        Position = UDim2.fromOffset(5, 10),
-        Size = UDim2.new(0, 4, 1, -20),
+        Position = UDim2.fromOffset(6, 12),
+        Size = UDim2.new(0, 4, 1, -24),
         BackgroundColor3 = Color3.new(1, 1, 1),
         BorderSizePixel = 0,
         Parent = frame,
     })
     corner(accent, UDim.new(1, 0))
-    card.accent = chilliGradient(accent, ColorSequence.new(Color3.new(1, 1, 1), Color3.new(1, 1, 1)))
+    card.accent = verticalGradient(accent, ColorSequence.new(Color3.new(1, 1, 1), Color3.new(1, 1, 1)))
 
-    card.well = Hud.inset(frame, { Position = UDim2.fromOffset(15, 11), Size = UDim2.fromOffset(52, 52) })
+    -- Icon well: a soft rarity glow behind it, a rarity ring around it, the item badge on its corner.
+    card.glow = create("ImageLabel", {
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.fromOffset(44, 40),
+        Size = UDim2.fromOffset(96, 96),
+        BackgroundTransparency = 1,
+        Image = Assets.Glow,
+        ImageTransparency = 0.72,
+        Parent = frame,
+    })
+    card.well = create("Frame", {
+        AnchorPoint = Vector2.new(0, 0.5),
+        Position = UDim2.new(0, 16, 0.5, 0),
+        Size = UDim2.fromOffset(56, 56),
+        BackgroundColor3 = Style.Plate,
+        BackgroundTransparency = 0.35,
+        BorderSizePixel = 0,
+        ZIndex = 2,
+        Parent = frame,
+    })
+    corner(card.well, UDim.new(0, 10))
+    card.wellStroke = outlineStroke(card.well, 2)
     card.icon = create("ImageLabel", {
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.fromScale(0.86, 0.86),
+        Size = UDim2.fromScale(0.84, 0.84),
         BackgroundTransparency = 1,
         ScaleType = Enum.ScaleType.Fit,
+        ZIndex = 2,
         Parent = card.well,
     })
     card.badge = create("ImageLabel", {
         AnchorPoint = Vector2.new(1, 1),
-        Position = UDim2.new(1, 6, 1, 6),
+        Position = UDim2.new(1, 7, 1, 7),
         Size = UDim2.fromOffset(24, 24),
-        BackgroundColor3 = Chilli.Plate,
-        BackgroundTransparency = 0.2,
+        BackgroundColor3 = Theme.Surface,
         ScaleType = Enum.ScaleType.Fit,
         Visible = false,
         ZIndex = 3,
         Parent = card.well,
     })
     corner(card.badge, UDim.new(1, 0))
-    chilliStroke(card.badge, 1.5)
+    outlineStroke(card.badge, 1.5)
 
-    local textX = 76
+    -- Text: name, then rarity pill + state dot, then value / weight chips.
+    local textX, reserve = 84, 98
     card.name = shinyText(label({
-        Position = UDim2.fromOffset(textX, 8),
-        Size = UDim2.new(1, -(textX + 92), 0, 18),
-        TextSize = 14,
+        Position = UDim2.fromOffset(textX, 9),
+        Size = UDim2.new(1, -(textX + reserve), 0, 19),
+        TextSize = 15,
         Parent = frame,
     }))
-    card.line = label({
-        Position = UDim2.fromOffset(textX, 27),
-        Size = UDim2.new(1, -(textX + 92), 0, 14),
-        TextSize = 11,
-        RichText = true,
+    local row = create("Frame", {
+        Position = UDim2.fromOffset(textX, 31),
+        Size = UDim2.new(1, -(textX + reserve), 0, 18),
+        BackgroundTransparency = 1,
         Parent = frame,
     })
+    create("UIListLayout", {
+        FillDirection = Enum.FillDirection.Horizontal,
+        VerticalAlignment = Enum.VerticalAlignment.Center,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 6),
+        Parent = row,
+    })
+    card.rarityPill, card.rarityText, card.rarityGradient = Hud.pill(row, "", Hud.Grey, 1)
+    card.stateDot = create("Frame", {
+        Size = UDim2.fromOffset(8, 8),
+        BackgroundColor3 = Theme.Muted,
+        BorderSizePixel = 0,
+        LayoutOrder = 2,
+        Parent = row,
+    })
+    corner(card.stateDot, UDim.new(1, 0))
+    card.state = label({
+        Size = UDim2.new(0, 0, 1, 0),
+        AutomaticSize = Enum.AutomaticSize.X,
+        TextSize = 11,
+        FontFace = Fonts.Medium,
+        TextColor3 = Theme.Muted,
+        TextTruncate = Enum.TextTruncate.None,
+        LayoutOrder = 3,
+        Parent = row,
+    })
     local chips = create("Frame", {
-        Position = UDim2.fromOffset(textX, 46),
-        Size = UDim2.new(1, -(textX + 92), 0, 18),
+        Position = UDim2.fromOffset(textX, 53),
+        Size = UDim2.new(1, -(textX + reserve), 0, 18),
         BackgroundTransparency = 1,
         Parent = frame,
     })
@@ -6451,21 +6525,21 @@ function Hud.stealCard(panel, list)
 
     card.best = Hud.pill(frame, "BEST", Hud.Gold)
     card.best.AnchorPoint = Vector2.new(1, 0)
-    card.best.Position = UDim2.new(1, -8, 0, -8)
+    card.best.Position = UDim2.new(1, -10, 0, -9)
     card.best.ZIndex = 4
     card.best.Visible = false
 
-    -- Actions: Chilli's red Rebirth button to steal now, a plate button to queue (shows the queue spot).
+    -- Actions: the pink button steals now; QUEUE adds it to the list and turns lilac with its spot once queued.
     card.steal = create("TextButton", {
         AnchorPoint = Vector2.new(1, 0),
-        Position = UDim2.new(1, -10, 0, 10),
-        Size = UDim2.fromOffset(76, 30),
+        Position = UDim2.new(1, -10, 0, 11),
+        Size = UDim2.fromOffset(82, 32),
         BackgroundTransparency = 1,
         Text = "",
         AutoButtonColor = false,
         Parent = frame,
     })
-    rebirthFace(card.steal, 1)
+    buttonFace(card.steal, 1)
     scaleFeedback(card.steal, 1.05, 0.94)
     card.stealText = shinyText(label({
         Size = UDim2.new(1, 0, 1, -4),
@@ -6477,16 +6551,20 @@ function Hud.stealCard(panel, list)
     }))
     card.queue = create("TextButton", {
         AnchorPoint = Vector2.new(1, 0),
-        Position = UDim2.new(1, -10, 0, 44),
-        Size = UDim2.fromOffset(76, 22),
-        BackgroundColor3 = Chilli.Plate,
-        BackgroundTransparency = 0.4,
+        Position = UDim2.new(1, -10, 0, 48),
+        Size = UDim2.fromOffset(82, 22),
+        BackgroundColor3 = Color3.new(1, 1, 1),
         Text = "",
         AutoButtonColor = false,
         Parent = frame,
     })
-    corner(card.queue, UDim.new(0, 7))
-    chilliStroke(card.queue, 2)
+    corner(card.queue, UDim.new(1, 0))
+    outlineStroke(card.queue, 2)
+    card.queueFill = create("UIGradient", {
+        Rotation = 90,
+        Color = ColorSequence.new(Theme.Surface3, Theme.Surface2),
+        Parent = card.queue,
+    })
     scaleFeedback(card.queue, 1.05, 0.94)
     card.queueText = label({
         Size = UDim2.fromScale(1, 1),
@@ -6512,9 +6590,28 @@ end
 function Hud.paintCard(card, item, order)
     card.id = item.Id
     local featured = item.Featured == true
+    local rarityColor = item.RarityColor or Theme.Muted
     card.frame.LayoutOrder = order
-    card.frame.Size = UDim2.new(1, 0, 0, featured and 84 or 74)
-    card.well.Size = UDim2.fromOffset(featured and 60 or 52, featured and 60 or 52)
+    card.frame.Size = UDim2.new(1, 0, 0, featured and 92 or 80)
+    local wellSize = featured and 66 or 56
+    card.well.Size = UDim2.fromOffset(wellSize, wellSize)
+    card.glow.Position = UDim2.fromOffset(16 + wellSize / 2, (featured and 92 or 80) / 2)
+    card.glow.Size = UDim2.fromOffset(wellSize * 1.8, wellSize * 1.8)
+    card.glow.ImageColor3 = rarityColor
+    card.glow.ImageTransparency = featured and 0.6 or 0.74
+
+    -- Featured: a gold rim; the rest rest on the ink outline. A light rarity wash from the left on every card.
+    card.restColor = featured and Hud.Gold[1] or Theme.Outline
+    card.stroke.Color = card.restColor
+    card.stroke.Thickness = featured and 3 or 2.5
+    card.tint.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, rarityColor:Lerp(Theme.Surface2, featured and 0.7 or 0.8)),
+        ColorSequenceKeypoint.new(0.55, Theme.Surface2),
+        ColorSequenceKeypoint.new(1, Theme.Surface2:Lerp(Style.Plate, 0.3)),
+    })
+    Hud.setColors(card.accent, { rarityColor:Lerp(Color3.new(1, 1, 1), 0.3), rarityColor })
+    card.wellStroke.Color = rarityColor:Lerp(Theme.Outline, 0.25)
+
     if item.Icon ~= card.iconValue then
         card.iconValue = item.Icon
         card.icon.Image = ""
@@ -6527,28 +6624,33 @@ function Hud.paintCard(card, item, order)
         card.badgeValue = item.Badge
         applyIcon(card.badge, item.Badge)
     end
+
     card.name.Text = tostring(item.Name or "")
-    local rarityColor = item.RarityColor or Color3.new(1, 1, 1)
-    local parts = {}
-    if item.Rarity then
-        table.insert(parts, ('<font color="#%s">%s</font>'):format(rarityColor:ToHex(), string.upper(tostring(item.Rarity))))
-    end
-    if item.State then
-        table.insert(parts, ('<font color="#%s">%s</font>'):format((item.StateColor or Theme.Muted):ToHex(), tostring(item.State)))
-    end
-    card.line.Text = table.concat(parts, "  ")
-    Hud.setColors(card.accent, { rarityColor:Lerp(Color3.new(1, 1, 1), 0.25), rarityColor })
+    card.rarityPill.Visible = item.Rarity ~= nil
+    card.rarityText.Text = string.upper(tostring(item.Rarity or ""))
+    Hud.setColors(card.rarityGradient, { rarityColor:Lerp(Color3.new(1, 1, 1), 0.35), rarityColor:Lerp(Style.Plate, 0.25) })
+    local stateColor = item.StateColor or Theme.Muted
+    card.stateDot.Visible = item.State ~= nil
+    card.stateDot.BackgroundColor3 = stateColor
+    card.state.Text = tostring(item.State or "")
+    card.state.TextColor3 = stateColor:Lerp(Theme.Text, 0.35)
+
     card.valuePill.Visible = item.Value ~= nil
     card.valueText.Text = tostring(item.Value or "")
     card.infoPill.Visible = item.Info ~= nil
     card.infoText.Text = tostring(item.Info or "")
     card.best.Visible = featured
     card.stealText.Text = item.ActionText or "STEAL"
-    card.queueText.Text = item.Queued and ("#" .. tostring(item.Queued)) or "+ QUEUE"
+
+    local queued = item.Queued ~= nil
+    card.queueText.Text = queued and ("#" .. tostring(item.Queued) .. " QUEUED") or "+ QUEUE"
+    card.queueText.TextColor3 = queued and Color3.new(1, 1, 1) or Theme.Text
+    card.queueFill.Color = queued and ColorSequence.new(Hud.Lilac[1], Hud.Lilac[2]) or ColorSequence.new(Theme.Surface3, Theme.Surface2)
 end
 
 -- Steal HUD: a side panel listing things to take (featured first), each with STEAL and QUEUE; a tab on its inner
--- edge hides / shows it. opts: { Title, Side = "Right" | "Left", Width, Height, EmptyText, OnSteal, OnQueue }.
+-- edge hides / shows it. opts: { Title, Subtitle, Icon, Side = "Right" | "Left", Width, Height, EmptyText, Hint,
+-- OnSteal, OnQueue }.
 function Library:CreateStealPanel(opts)
     opts = type(opts) == "table" and opts or {}
     local panel = { Collapsed = false, Visible = true, OnSteal = opts.OnSteal, OnQueue = opts.OnQueue, _cards = {}, _connections = {} }
@@ -6556,7 +6658,7 @@ function Library:CreateStealPanel(opts)
     local gui = Hud.screen(opts.Name or "BloomSteal", 994)
     panel.Gui = gui
     local right = opts.Side ~= "Left"
-    local width, height = opts.Width or 310, opts.Height or 390
+    local width, height = opts.Width or 330, opts.Height or 420
     local openPosition = UDim2.new(right and 1 or 0, right and -16 or 16, 0.5, 0)
 
     local holder = create("Frame", {
@@ -6568,51 +6670,117 @@ function Library:CreateStealPanel(opts)
     })
     panel.Holder = holder
     Hud.autoScale(gui, holder, connections)
-    local frame = Hud.plate(holder, { Size = UDim2.fromScale(1, 1) })
+    local frame = Hud.plate(holder, { Size = UDim2.fromScale(1, 1), ClipsDescendants = true })
 
-    local header = create("Frame", { Size = UDim2.new(1, 0, 0, 46), BackgroundTransparency = 1, Parent = frame })
-    shinyText(label({
-        Position = UDim2.fromOffset(16, 0),
-        Size = UDim2.new(1, -90, 1, 0),
+    -- Header: a pink badge with the icon, title over a subtitle, the item count; a soft accent wash behind it.
+    local headerHeight = 62
+    local header = create("Frame", { Size = UDim2.new(1, 0, 0, headerHeight), BackgroundColor3 = Theme.Accent, BackgroundTransparency = 0.82, BorderSizePixel = 0, Parent = frame })
+    create("UIGradient", {
+        Rotation = 90,
+        Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.2), NumberSequenceKeypoint.new(1, 1) }),
+        Parent = header,
+    })
+    local badge = create("Frame", {
+        AnchorPoint = Vector2.new(0, 0.5),
+        Position = UDim2.new(0, 14, 0.5, 0),
+        Size = UDim2.fromOffset(36, 36),
+        BackgroundTransparency = 1,
+        Parent = header,
+    })
+    buttonFace(badge, 1)
+    local badgeIcon = create("ImageLabel", {
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.new(0.5, 0, 0.5, -2),
+        Size = UDim2.fromOffset(18, 18),
+        BackgroundTransparency = 1,
+        ImageColor3 = Color3.new(1, 1, 1),
+        ZIndex = 3,
+        Parent = badge,
+    })
+    applyIcon(badgeIcon, opts.Icon or "hand-coins")
+    local titleLabel = shinyText(label({
+        Position = UDim2.fromOffset(60, 12),
+        Size = UDim2.new(1, -130, 0, 20),
         Text = string.upper(opts.Title or "Steal"),
         TextSize = 16,
         Parent = header,
     }))
-    local countPill, countText = Hud.pill(header, "0", Hud.Red)
+    label({
+        Position = UDim2.fromOffset(60, 33),
+        Size = UDim2.new(1, -130, 0, 15),
+        Text = opts.Subtitle or "Best eggs on the field",
+        TextSize = 12,
+        FontFace = Fonts.Medium,
+        TextColor3 = Theme.Muted,
+        Parent = header,
+    })
+    local countPill, countText = Hud.pill(header, "0", Hud.Bloom)
     countPill.AnchorPoint = Vector2.new(1, 0.5)
     countPill.Position = UDim2.new(1, -14, 0.5, 0)
     Hud.drag(header, holder, connections)
-    create("Frame", {
-        Position = UDim2.new(0, 14, 0, 45),
+    local rule = create("Frame", {
+        Position = UDim2.new(0, 14, 0, headerHeight),
         Size = UDim2.new(1, -28, 0, 2),
-        BackgroundColor3 = Chilli.Plate,
-        BackgroundTransparency = 0.4,
+        BackgroundColor3 = Theme.Accent,
         BorderSizePixel = 0,
         Parent = frame,
     })
+    create("UIGradient", {
+        Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 1),
+            NumberSequenceKeypoint.new(0.5, 0.2),
+            NumberSequenceKeypoint.new(1, 1),
+        }),
+        Parent = rule,
+    })
 
+    local footerHeight = 26
     local list = create("ScrollingFrame", {
-        Position = UDim2.fromOffset(0, 50),
-        Size = UDim2.new(1, 0, 1, -50),
+        Position = UDim2.fromOffset(0, headerHeight + 4),
+        Size = UDim2.new(1, 0, 1, -(headerHeight + 4 + footerHeight)),
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
         ScrollBarThickness = 3,
-        ScrollBarImageColor3 = Chilli.AccentColor,
+        ScrollBarImageColor3 = Style.AccentColor,
         AutomaticCanvasSize = Enum.AutomaticSize.Y,
         CanvasSize = UDim2.new(),
         Parent = frame,
     })
-    padding(list, 12, 12, 6, 12)
-    create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 9), Parent = list })
-    local empty = label({
-        Size = UDim2.new(1, 0, 0, 60),
+    padding(list, 12, 12, 10, 10)
+    create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 10), Parent = list })
+
+    -- Empty state: an icon over the text.
+    local empty = create("Frame", { Size = UDim2.new(1, 0, 0, 96), BackgroundTransparency = 1, LayoutOrder = 0, Parent = list })
+    local emptyIcon = create("ImageLabel", {
+        AnchorPoint = Vector2.new(0.5, 0),
+        Position = UDim2.new(0.5, 0, 0, 16),
+        Size = UDim2.fromOffset(34, 34),
+        BackgroundTransparency = 1,
+        ImageColor3 = Theme.Muted,
+        Parent = empty,
+    })
+    applyIcon(emptyIcon, "search")
+    label({
+        Position = UDim2.fromOffset(0, 58),
+        Size = UDim2.new(1, 0, 0, 18),
         Text = opts.EmptyText or "Nothing to steal yet",
         TextSize = 13,
         FontFace = Fonts.Medium,
         TextColor3 = Theme.Muted,
         TextXAlignment = Enum.TextXAlignment.Center,
-        LayoutOrder = 0,
-        Parent = list,
+        Parent = empty,
+    })
+
+    label({
+        AnchorPoint = Vector2.new(0, 1),
+        Position = UDim2.new(0, 0, 1, -6),
+        Size = UDim2.new(1, 0, 0, 14),
+        Text = opts.Hint or "STEAL goes now  -  QUEUE adds it to the list",
+        TextSize = 11,
+        FontFace = Fonts.Medium,
+        TextColor3 = Theme.Muted,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        Parent = frame,
     })
 
     -- Hide / show tab on the inner edge: it stays on screen while the panel slides out.
@@ -6625,7 +6793,7 @@ function Library:CreateStealPanel(opts)
         AutoButtonColor = false,
         Parent = holder,
     })
-    rebirthFace(tab, 1)
+    buttonFace(tab, 1)
     scaleFeedback(tab, 1.06, 0.94)
     local arrow = create("ImageLabel", {
         AnchorPoint = Vector2.new(0.5, 0.5),
@@ -6670,7 +6838,7 @@ function Library:CreateStealPanel(opts)
     end
 
     function panel:SetTitle(value)
-        header:FindFirstChildOfClass("TextLabel").Text = string.upper(tostring(value or ""))
+        titleLabel.Text = string.upper(tostring(value or ""))
     end
 
     function panel:SetVisible(value)
