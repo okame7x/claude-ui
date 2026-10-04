@@ -73,7 +73,7 @@ local function finishElement(tab, opts, element, frame, kind)
 end
 
 -- Bloom (white): white surfaces tinted pink as they stack, a blossom pink accent with a lilac partner. Outline frames
--- cards, buttons and panels (a soft rose); TextOutline is the light halo dark headings carry.
+-- cards, buttons and panels (a soft rose). Text has no outline.
 -- Contrast: Text on Background ~12:1, Muted on Background ~5.5:1, white on Accent ~4.6:1.
 Library.Theme = {
     Background = Color3.fromRGB(255, 252, 253),
@@ -88,7 +88,6 @@ Library.Theme = {
     Text = Color3.fromRGB(40, 20, 31),
     Muted = Color3.fromRGB(122, 88, 105),
     Outline = Color3.fromRGB(222, 168, 194),
-    TextOutline = Color3.fromRGB(255, 255, 255),
     Warning = Color3.fromRGB(176, 104, 30),
     Success = Color3.fromRGB(46, 132, 84),
     Error = Color3.fromRGB(190, 48, 80),
@@ -338,19 +337,8 @@ local function label(props)
     for key, value in pairs(props) do
         defaults[key] = value
     end
-    local text = create("TextLabel", defaults)
-    -- Headings in Gotham SSm ExtraBold carry a light halo so they read over the pink washes; body text stays plain.
-    if defaults.FontFace == Fonts.Title then
-        create("UIStroke", {
-            Name = "Outline",
-            ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
-            Color = Theme.TextOutline,
-            Thickness = 1.2,
-            LineJoinMode = Enum.LineJoinMode.Round,
-            Parent = text,
-        })
-    end
-    return text
+    -- No text outlines on the white theme: clean colour reads better than a halo around every word.
+    return create("TextLabel", defaults)
 end
 
 -- Bloom styling shared by the window and the HUDs: button gradients, the accent, the shiny heading recipe.
@@ -370,15 +358,7 @@ local Style = {
     -- Accent for "on" states and chevrons.
     Accent = ColorSequence.new(Theme.Accent, Theme.Accent2),
     AccentColor = Theme.Accent,
-    -- Shiny text on pink (buttons, the selected tab): white with a soft break, a rose outline.
-    ShinyText = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(0.486, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(0.519, Color3.fromRGB(255, 232, 244)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 240, 248)),
-    }),
-    ShinyStroke = ColorSequence.new(Color3.fromRGB(150, 30, 92), Color3.fromRGB(110, 18, 66)),
-    -- Headings on white: deep plum easing into the accent, under the light halo.
+    -- Headings on white: deep plum easing into the accent.
     InkText = ColorSequence.new(Color3.fromRGB(52, 22, 40), Color3.fromRGB(150, 44, 100)),
     -- Inset / plate tint (icon wells, stat tiles, section heads), used half transparent.
     Plate = Color3.fromRGB(236, 206, 222),
@@ -402,27 +382,25 @@ local function verticalGradient(parent, color, name)
     return create("UIGradient", { Name = name or "Gradient", Color = color, Rotation = 90, Parent = parent })
 end
 
--- Heading text. onAccent (buttons, the selected tab): white gradient with a rose outline. Otherwise (on the white
--- surfaces): a plum-to-accent gradient under the light halo.
+-- Heading text, no outline. onAccent (buttons, the selected tab): plain white. Otherwise (on the white surfaces): a
+-- plum-to-accent gradient.
 local function shinyText(text, onAccent)
     text.FontFace = Fonts.Title
-    text.TextColor3 = Color3.new(1, 1, 1)
-    local outline = text:FindFirstChild("Outline") or create("UIStroke", {
-        Name = "Outline",
-        ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
-        LineJoinMode = Enum.LineJoinMode.Round,
-        Parent = text,
-    })
-    outline.Color = onAccent and Color3.new(1, 1, 1) or Theme.TextOutline
-    outline.Thickness = onAccent and 1.6 or 1.2
-    local strokeGradient = outline:FindFirstChild("StrokeStyleGradient")
-    if onAccent and not strokeGradient then
-        verticalGradient(outline, Style.ShinyStroke, "StrokeStyleGradient")
-    elseif not onAccent and strokeGradient then
-        strokeGradient:Destroy()
+    local outline = text:FindFirstChild("Outline")
+    if outline then
+        outline:Destroy()
     end
-    local textGradient = text:FindFirstChild("TextStyleGradient") or verticalGradient(text, Style.ShinyText, "TextStyleGradient")
-    textGradient.Color = onAccent and Style.ShinyText or Style.InkText
+    local textGradient = text:FindFirstChild("TextStyleGradient")
+    if onAccent then
+        if textGradient then
+            textGradient:Destroy()
+        end
+        text.TextColor3 = Color3.new(1, 1, 1)
+        return text
+    end
+    text.TextColor3 = Color3.new(1, 1, 1)
+    textGradient = textGradient or verticalGradient(text, Style.InkText, "TextStyleGradient")
+    textGradient.Color = Style.InkText
     return text
 end
 
@@ -6016,10 +5994,10 @@ local Hud = {
     StateWords = { active = "WORKING", waiting = "WAITING", idle = "IDLE" },
     Red = { Color3.fromRGB(244, 96, 118), Color3.fromRGB(190, 30, 62) },
     Green = { Color3.fromRGB(64, 206, 96), Color3.fromRGB(18, 124, 52) },
-    Grey = { Color3.fromRGB(218, 204, 222), Color3.fromRGB(122, 100, 130) },
-    Bloom = { Color3.fromRGB(255, 150, 205), Color3.fromRGB(214, 52, 136) },
+    Grey = { Color3.fromRGB(170, 146, 176), Color3.fromRGB(110, 86, 120) },
+    Bloom = { Color3.fromRGB(232, 98, 164), Color3.fromRGB(190, 40, 116) },
     Sky = { Color3.fromRGB(72, 196, 255), Color3.fromRGB(10, 124, 226) },
-    Lilac = { Color3.fromRGB(206, 170, 255), Color3.fromRGB(130, 76, 220) },
+    Lilac = { Color3.fromRGB(172, 120, 240), Color3.fromRGB(118, 64, 204) },
     Gold = { Color3.fromRGB(246, 184, 52), Color3.fromRGB(206, 116, 10) },
 }
 Library.Hud = Hud
@@ -6248,12 +6226,6 @@ function Hud.pill(parent, text, colors, layoutOrder)
         TextTruncate = Enum.TextTruncate.None,
         Parent = frame,
     })
-    -- White text on light gradients (grey, sky, gold) needs a dark rim to stay legible.
-    local rim = text_:FindFirstChild("Outline")
-    if rim then
-        rim.Color = Color3.fromRGB(70, 28, 52)
-        rim.Transparency = 0.35
-    end
     return frame, text_, gradient
 end
 
@@ -6491,11 +6463,6 @@ function Library:CreateStatus(opts)
                 TextXAlignment = Enum.TextXAlignment.Right,
                 Parent = frame_,
             })
-            local rim = valueLabel:FindFirstChild("Outline")
-            if rim then
-                rim.Color = Color3.fromRGB(70, 28, 52)
-                rim.Transparency = 0.4
-            end
             tile = { value = valueLabel, gradient = verticalGradient(valueLabel, ColorSequence.new(Hud.Green[1], Hud.Green[2])) }
             status._stats[name] = tile
         end
