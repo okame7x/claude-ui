@@ -1,8 +1,8 @@
 # Bloom Hub UI
 
-Roblox UI library for Bloom Hub: dark plum surfaces with a blossom pink accent, Gotham SSm titles with an ink
-outline, shiny headers, pink gradient buttons, collapsible sections, right-side tabs and a clean floating icon, plus
-Status and Steal HUD templates.
+Roblox UI library for Bloom Hub: a white theme with a blossom pink accent and falling blossom petals, Gotham SSm
+titles, pink gradient buttons, collapsible sections, right-side tabs and a clean floating icon, plus Status and Steal
+HUD templates. Set `Library.ReducedMotion = true` to stop every animated backdrop.
 
 ## Load
 

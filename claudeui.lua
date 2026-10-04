@@ -72,24 +72,26 @@ local function finishElement(tab, opts, element, frame, kind)
     return element
 end
 
--- Bloom: deep plum surfaces, a blossom pink accent with a lilac partner. Outline is the near-black ink every
--- heading, card and button is drawn with.
+-- Bloom (white): white surfaces tinted pink as they stack, a blossom pink accent with a lilac partner. Outline frames
+-- cards, buttons and panels (a soft rose); TextOutline is the light halo dark headings carry.
+-- Contrast: Text on Background ~12:1, Muted on Background ~5.5:1, white on Accent ~4.6:1.
 Library.Theme = {
-    Background = Color3.fromRGB(17, 13, 22),
-    Surface = Color3.fromRGB(23, 18, 29),
-    Surface2 = Color3.fromRGB(30, 23, 38),
-    Surface3 = Color3.fromRGB(46, 35, 57),
-    Stroke = Color3.fromRGB(70, 50, 84),
-    StrokeHover = Color3.fromRGB(255, 110, 180),
-    Accent = Color3.fromRGB(255, 99, 170),
-    Accent2 = Color3.fromRGB(178, 120, 255),
-    AccentDark = Color3.fromRGB(42, 12, 30),
-    Text = Color3.fromRGB(250, 242, 248),
-    Muted = Color3.fromRGB(180, 158, 184),
-    Outline = Color3.fromRGB(14, 6, 12),
-    Warning = Color3.fromRGB(255, 196, 100),
-    Success = Color3.fromRGB(120, 230, 160),
-    Error = Color3.fromRGB(255, 110, 130),
+    Background = Color3.fromRGB(255, 252, 253),
+    Surface = Color3.fromRGB(252, 242, 247),
+    Surface2 = Color3.fromRGB(248, 230, 239),
+    Surface3 = Color3.fromRGB(241, 211, 226),
+    Stroke = Color3.fromRGB(230, 192, 210),
+    StrokeHover = Color3.fromRGB(205, 66, 133),
+    Accent = Color3.fromRGB(198, 56, 124),
+    Accent2 = Color3.fromRGB(150, 90, 230),
+    AccentDark = Color3.fromRGB(255, 244, 249),
+    Text = Color3.fromRGB(40, 20, 31),
+    Muted = Color3.fromRGB(122, 88, 105),
+    Outline = Color3.fromRGB(222, 168, 194),
+    TextOutline = Color3.fromRGB(255, 255, 255),
+    Warning = Color3.fromRGB(176, 104, 30),
+    Success = Color3.fromRGB(46, 132, 84),
+    Error = Color3.fromRGB(190, 48, 80),
 }
 
 Library.Assets = {
@@ -337,12 +339,12 @@ local function label(props)
         defaults[key] = value
     end
     local text = create("TextLabel", defaults)
-    -- Headings in Gotham SSm ExtraBold carry an ink outline so they read over anything; body text stays plain.
+    -- Headings in Gotham SSm ExtraBold carry a light halo so they read over the pink washes; body text stays plain.
     if defaults.FontFace == Fonts.Title then
         create("UIStroke", {
             Name = "Outline",
             ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual,
-            Color = Theme.Outline,
+            Color = Theme.TextOutline,
             Thickness = 1.2,
             LineJoinMode = Enum.LineJoinMode.Round,
             Parent = text,
@@ -368,15 +370,18 @@ local Style = {
     -- Accent for "on" states and chevrons.
     Accent = ColorSequence.new(Theme.Accent, Theme.Accent2),
     AccentColor = Theme.Accent,
-    -- Shiny heading text: white with a soft break, a plum outline.
+    -- Shiny text on pink (buttons, the selected tab): white with a soft break, a rose outline.
     ShinyText = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
         ColorSequenceKeypoint.new(0.486, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(0.519, Color3.fromRGB(236, 224, 234)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(246, 236, 244)),
+        ColorSequenceKeypoint.new(0.519, Color3.fromRGB(255, 232, 244)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 240, 248)),
     }),
-    ShinyStroke = ColorSequence.new(Color3.fromRGB(86, 16, 62), Color3.fromRGB(46, 8, 34)),
-    Plate = Color3.fromRGB(8, 4, 10),
+    ShinyStroke = ColorSequence.new(Color3.fromRGB(150, 30, 92), Color3.fromRGB(110, 18, 66)),
+    -- Headings on white: deep plum easing into the accent, under the light halo.
+    InkText = ColorSequence.new(Color3.fromRGB(52, 22, 40), Color3.fromRGB(150, 44, 100)),
+    -- Inset / plate tint (icon wells, stat tiles, section heads), used half transparent.
+    Plate = Color3.fromRGB(236, 206, 222),
 }
 Library.Style = Style
 
@@ -397,8 +402,9 @@ local function verticalGradient(parent, color, name)
     return create("UIGradient", { Name = name or "Gradient", Color = color, Rotation = 90, Parent = parent })
 end
 
--- Shiny heading: white vertical gradient on the text, a plum gradient on its outline.
-local function shinyText(text)
+-- Heading text. onAccent (buttons, the selected tab): white gradient with a rose outline. Otherwise (on the white
+-- surfaces): a plum-to-accent gradient under the light halo.
+local function shinyText(text, onAccent)
     text.FontFace = Fonts.Title
     text.TextColor3 = Color3.new(1, 1, 1)
     local outline = text:FindFirstChild("Outline") or create("UIStroke", {
@@ -407,14 +413,16 @@ local function shinyText(text)
         LineJoinMode = Enum.LineJoinMode.Round,
         Parent = text,
     })
-    outline.Color = Color3.new(1, 1, 1)
-    outline.Thickness = 1.6
-    if not outline:FindFirstChild("StrokeStyleGradient") then
+    outline.Color = onAccent and Color3.new(1, 1, 1) or Theme.TextOutline
+    outline.Thickness = onAccent and 1.6 or 1.2
+    local strokeGradient = outline:FindFirstChild("StrokeStyleGradient")
+    if onAccent and not strokeGradient then
         verticalGradient(outline, Style.ShinyStroke, "StrokeStyleGradient")
+    elseif not onAccent and strokeGradient then
+        strokeGradient:Destroy()
     end
-    if not text:FindFirstChild("TextStyleGradient") then
-        verticalGradient(text, Style.ShinyText, "TextStyleGradient")
-    end
+    local textGradient = text:FindFirstChild("TextStyleGradient") or verticalGradient(text, Style.ShinyText, "TextStyleGradient")
+    textGradient.Color = onAccent and Style.ShinyText or Style.InkText
     return text
 end
 
@@ -476,6 +484,118 @@ local function buttonFace(parent, zIndex)
     corner(highlight, UDim.new(0, 6))
     verticalGradient(highlight, Style.ButtonShine, "FaceGradient")
     return base, face
+end
+
+-- Animated blossom backdrop inside `parent` (under everything, ZIndex `z`): two pink washes drifting over the white,
+-- a slow sheen crossing every 9s and falling petals (the logo) that sway, spin and respawn above the top. Everything
+-- is created once and recycled; returns step(deltaTime) to call every frame and setVisible(bool).
+local function blossomBackdrop(parent, petalCount, z)
+    z = z or 0
+    local layers = {}
+    local function layer(props, gradient)
+        local frame = create("Frame", {
+            Size = UDim2.fromScale(1, 1),
+            BackgroundColor3 = Color3.new(1, 1, 1),
+            BackgroundTransparency = props.transparency or 0,
+            BorderSizePixel = 0,
+            ZIndex = z,
+            Name = props.name,
+            Parent = parent,
+        })
+        local parentCorner = parent:FindFirstChildOfClass("UICorner")
+        if parentCorner then
+            corner(frame, parentCorner.CornerRadius)
+        end
+        gradient.Parent = frame
+        table.insert(layers, frame)
+        return gradient
+    end
+    local washA = layer({ name = "BackdropA" }, create("UIGradient", {
+        Rotation = 20,
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Theme.Background),
+            ColorSequenceKeypoint.new(0.5, Theme.Surface2),
+            ColorSequenceKeypoint.new(1, Theme.Background),
+        }),
+    }))
+    local washB = layer({ name = "BackdropB", transparency = 0.45 }, create("UIGradient", {
+        Rotation = -35,
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Theme.Background),
+            ColorSequenceKeypoint.new(0.45, Theme.Accent:Lerp(Color3.new(1, 1, 1), 0.72)),
+            ColorSequenceKeypoint.new(1, Theme.Background),
+        }),
+    }))
+    local sheen = layer({ name = "BackdropSheen", transparency = 0.82 }, create("UIGradient", {
+        Rotation = 68,
+        Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 1),
+            NumberSequenceKeypoint.new(0.46, 1),
+            NumberSequenceKeypoint.new(0.5, 0.45),
+            NumberSequenceKeypoint.new(0.54, 1),
+            NumberSequenceKeypoint.new(1, 1),
+        }),
+    }))
+
+    local petals = {}
+    local random = Random.new(os.clock() * 1000)
+    local function reseed(petal, above)
+        petal.x = random:NextNumber(-0.05, 1.05)
+        petal.y = above and random:NextNumber(-0.35, -0.05) or random:NextNumber(-0.2, 1)
+        petal.fall = random:NextNumber(0.018, 0.055)
+        petal.sway = random:NextNumber(0.012, 0.035)
+        petal.swaySpeed = random:NextNumber(0.5, 1.5)
+        petal.phase = random:NextNumber(0, math.pi * 2)
+        petal.spin = random:NextNumber(-28, 28)
+        local side = random:NextInteger(14, 30)
+        petal.image.Size = UDim2.fromOffset(side, side)
+        petal.image.ImageTransparency = random:NextNumber(0.55, 0.85)
+        petal.image.Rotation = random:NextNumber(0, 360)
+    end
+    for _ = 1, petalCount or 14 do
+        local petal = {
+            image = create("ImageLabel", {
+                Name = "Petal",
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                BackgroundTransparency = 1,
+                Image = Assets.Logo,
+                ImageColor3 = Theme.Accent:Lerp(Color3.new(1, 1, 1), 0.35),
+                ScaleType = Enum.ScaleType.Fit,
+                ZIndex = z,
+                Parent = parent,
+            }),
+        }
+        reseed(petal, false)
+        table.insert(petals, petal)
+        table.insert(layers, petal.image)
+    end
+
+    local clock, shown = 0, true
+    local function step(deltaTime)
+        if not shown then
+            return
+        end
+        clock += deltaTime
+        washA.Offset = Vector2.new(math.sin(clock * 0.11) * 0.28, math.cos(clock * 0.08) * 0.18)
+        washB.Offset = Vector2.new(math.cos(clock * 0.07) * 0.32, math.sin(clock * 0.13) * 0.2)
+        washB.Rotation = -35 + math.sin(clock * 0.05) * 12
+        for _, petal in ipairs(petals) do
+            petal.y += petal.fall * deltaTime
+            if petal.y > 1.2 then
+                reseed(petal, true)
+            end
+            petal.image.Rotation += petal.spin * deltaTime
+            petal.image.Position = UDim2.fromScale(petal.x + math.sin(clock * petal.swaySpeed + petal.phase) * petal.sway, petal.y)
+        end
+        sheen.Offset = Vector2.new((clock / 9 % 1) * 2.4 - 1.2, 0)
+    end
+    local function setVisible(value)
+        shown = value ~= false
+        for _, object in ipairs(layers) do
+            object.Visible = shown
+        end
+    end
+    return step, setVisible
 end
 
 local function glow(parent, size, position, transparency, rotation)
@@ -778,7 +898,7 @@ local function card(tab, className, height, opts)
     create("UIGradient", {
         Name = "Gloss",
         Rotation = 90,
-        Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(176, 170, 178)),
+        Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(246, 234, 241)),
         Parent = frame,
     })
     if className == "TextButton" then
@@ -1036,7 +1156,7 @@ function Tab:Button(opts)
                 child.Size = child.Size - UDim2.fromOffset(iconOffset, 0)
             end
             if child.FontFace == Fonts.Title then
-                shinyText(child)
+                shinyText(child, true)
             end
         end
     end
@@ -2772,6 +2892,19 @@ function Library.Window(_, opts)
     glow(body, UDim2.fromOffset(130, 60), UDim2.new(0, -10, 1, -10), 0.75, 90)
     glow(body, UDim2.fromOffset(520, 240), UDim2.new(1, -14, 0, 10), 0.92, 90)
 
+    -- Falling blossoms behind everything. ReducedMotion (on the window or the whole library) hides and stops them.
+    local backdropStep, backdropVisible = blossomBackdrop(body, 14, 0)
+    table.insert(self._frameSteps, function(deltaTime)
+        local reduced = self.ReducedMotion == true or Library.ReducedMotion == true
+        if reduced ~= self._backdropReduced then
+            self._backdropReduced = reduced
+            backdropVisible(not reduced)
+        end
+        if not reduced then
+            backdropStep(deltaTime)
+        end
+    end)
+
     local sidebar = create("Frame", {
         Name = "Sidebar",
         Size = UDim2.new(0, SIDEBAR_WIDTH, 1, 0),
@@ -3498,7 +3631,7 @@ function Window:_clampToScreen()
     end
 end
 
--- Floating icon that opens / closes the window: a round logo disc with a pink border. Drag it anywhere; tap to toggle.
+-- Floating icon that opens / closes the window: a round logo disc. Drag it anywhere; tap to toggle.
 function Window:_createOpenButton(opts)
     local gui = self.Gui
     local size = TOUCH and 60 or 54
@@ -3524,18 +3657,10 @@ function Window:_createOpenButton(opts)
         ZIndex = 30,
         Parent = button,
     })
-    -- Round disc with a blossom pink border.
+    -- Round disc, no border.
     corner(face, UDim.new(1, 0))
-    create("UIStroke", {
-        Name = "Border",
-        Thickness = 2.5,
-        Color = Theme.Accent,
-        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-        Parent = face,
-    })
-    -- The logo is a square picture with its own background: it sits inset in the disc (a white ring between it and
-    -- the pink border) and gets its own round corner, which crops the image itself (the disc's corner does not clip
-    -- its children).
+    -- The logo is a square picture with its own background: it sits inset in the disc (a white ring around it) and
+    -- gets its own round corner, which crops the image itself (the disc's corner does not clip its children).
     local icon = create("ImageLabel", {
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.fromScale(0.5, 0.5),
@@ -5889,13 +6014,13 @@ local Hud = {
         idle = { Color3.fromRGB(170, 174, 184), Color3.fromRGB(90, 94, 110) },
     },
     StateWords = { active = "WORKING", waiting = "WAITING", idle = "IDLE" },
-    Red = { Color3.fromRGB(255, 132, 123), Color3.fromRGB(239, 28, 28) },
-    Green = { Color3.fromRGB(58, 255, 55), Color3.fromRGB(20, 109, 0) },
+    Red = { Color3.fromRGB(244, 96, 118), Color3.fromRGB(190, 30, 62) },
+    Green = { Color3.fromRGB(64, 206, 96), Color3.fromRGB(18, 124, 52) },
     Grey = { Color3.fromRGB(218, 204, 222), Color3.fromRGB(122, 100, 130) },
     Bloom = { Color3.fromRGB(255, 150, 205), Color3.fromRGB(214, 52, 136) },
-    Sky = { Color3.fromRGB(130, 228, 255), Color3.fromRGB(18, 156, 255) },
+    Sky = { Color3.fromRGB(72, 196, 255), Color3.fromRGB(10, 124, 226) },
     Lilac = { Color3.fromRGB(206, 170, 255), Color3.fromRGB(130, 76, 220) },
-    Gold = { Color3.fromRGB(255, 214, 84), Color3.fromRGB(255, 150, 20) },
+    Gold = { Color3.fromRGB(246, 184, 52), Color3.fromRGB(206, 116, 10) },
 }
 Library.Hud = Hud
 Library.Screens = Library.Screens or {}
@@ -6078,7 +6203,7 @@ function Hud.plate(parent, props)
     create("UIGradient", {
         Name = "Gloss",
         Rotation = 90,
-        Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(170, 164, 172)),
+        Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(246, 234, 241)),
         Parent = frame,
     })
     return frame
@@ -6123,6 +6248,12 @@ function Hud.pill(parent, text, colors, layoutOrder)
         TextTruncate = Enum.TextTruncate.None,
         Parent = frame,
     })
+    -- White text on light gradients (grey, sky, gold) needs a dark rim to stay legible.
+    local rim = text_:FindFirstChild("Outline")
+    if rim then
+        rim.Color = Color3.fromRGB(70, 28, 52)
+        rim.Transparency = 0.35
+    end
     return frame, text_, gradient
 end
 
@@ -6360,6 +6491,11 @@ function Library:CreateStatus(opts)
                 TextXAlignment = Enum.TextXAlignment.Right,
                 Parent = frame_,
             })
+            local rim = valueLabel:FindFirstChild("Outline")
+            if rim then
+                rim.Color = Color3.fromRGB(70, 28, 52)
+                rim.Transparency = 0.4
+            end
             tile = { value = valueLabel, gradient = verticalGradient(valueLabel, ColorSequence.new(Hud.Green[1], Hud.Green[2])) }
             status._stats[name] = tile
         end
@@ -6414,7 +6550,7 @@ function Library:CreateStatus(opts)
         for index, node in stepNodes do
             local done, now = index < current, index == current
             node.dot.BackgroundColor3 = done and Hud.Bloom[1] or (now and Color3.new(1, 1, 1) or Theme.Surface3)
-            node.caption.TextColor3 = now and Color3.new(1, 1, 1) or (done and Hud.Bloom[1] or Theme.Muted)
+            node.caption.TextColor3 = now and Theme.Text or (done and Theme.Accent or Theme.Muted)
         end
     end
 
@@ -6667,7 +6803,7 @@ function Hud.stealCard(panel, list)
         TextXAlignment = Enum.TextXAlignment.Center,
         ZIndex = 3,
         Parent = card.steal,
-    }))
+    }), true)
     card.queue = create("TextButton", {
         AnchorPoint = Vector2.new(1, 0),
         Position = UDim2.new(1, -10, 0, 48),
@@ -6837,6 +6973,20 @@ function Library:CreateStealPanel(opts)
     panel.Holder = holder
     Hud.autoScale(gui, holder, connections)
     local frame = Hud.plate(holder, { Size = UDim2.fromScale(1, 1), ClipsDescendants = true })
+
+    -- The same falling blossoms as the window, under the header and the cards.
+    local backdropStep, backdropVisible = blossomBackdrop(frame, 10, 1)
+    local backdropReduced
+    table.insert(connections, RunService.RenderStepped:Connect(function(deltaTime)
+        local reduced = panel.ReducedMotion == true or Library.ReducedMotion == true
+        if reduced ~= backdropReduced then
+            backdropReduced = reduced
+            backdropVisible(not reduced)
+        end
+        if not reduced and holder.Visible then
+            backdropStep(deltaTime)
+        end
+    end))
 
     -- Header: title over a subtitle, the item count; a soft accent wash behind it.
     local headerHeight = 62
