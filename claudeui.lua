@@ -6121,9 +6121,48 @@ function Hud.autoScale(gui, target, connections)
     return scale
 end
 
+-- Keeps `target` fully on screen (like the window's _clampToScreen), `margin` px from the edges; a HUD bigger than
+-- the screen pins to its top-left. Moves it by the overflow only, so its anchor and scale are untouched.
+function Hud.clamp(gui, target, margin)
+    margin = margin or 8
+    local screen = gui.AbsoluteSize
+    if screen.X <= 0 or screen.Y <= 0 or not target.Visible then
+        return
+    end
+    local position = target.AbsolutePosition - gui.AbsolutePosition
+    local size = target.AbsoluteSize
+    local function overflow(start, length, limit)
+        if start < margin or length > limit - margin * 2 then
+            return margin - start
+        elseif start + length > limit - margin then
+            return limit - margin - (start + length)
+        end
+        return 0
+    end
+    local dx, dy = overflow(position.X, size.X, screen.X), overflow(position.Y, size.Y, screen.Y)
+    if dx ~= 0 or dy ~= 0 then
+        target.Position = target.Position + UDim2.fromOffset(dx, dy)
+    end
+end
+
+-- Re-clamps when the screen changes size (rotation, a resized game window) and once after the first layout.
+-- canClamp() == false skips it (a Steal panel slid away on purpose).
+function Hud.keepOnScreen(gui, target, connections, canClamp)
+    local function run()
+        if not canClamp or canClamp() then
+            Hud.clamp(gui, target)
+        end
+    end
+    table.insert(connections, gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+        task.defer(run)
+    end))
+    task.delay(0.1, run)
+    return run
+end
+
 -- Drags `target` when a press lands on the border band of `edgeObject` (never from its middle), following only the
--- touch / mouse that started it (another finger never takes over).
-function Hud.drag(edgeObject, target, connections)
+-- touch / mouse that started it (another finger never takes over). With canClamp, it stays on screen while dragged.
+function Hud.drag(edgeObject, target, connections, canClamp)
     local dragInput, startPoint, startPosition
     table.insert(connections, UserInputService.InputBegan:Connect(function(input)
         if dragInput or not isPress(input) or not edgeObject.Visible or not target.Visible then
@@ -6154,6 +6193,12 @@ function Hud.drag(edgeObject, target, connections)
         local point = input.UserInputType == Enum.UserInputType.Touch and Vector2.new(input.Position.X, input.Position.Y) or pointerPosition()
         local delta = point - startPoint
         target.Position = UDim2.new(startPosition.X.Scale, startPosition.X.Offset + delta.X, startPosition.Y.Scale, startPosition.Y.Offset + delta.Y)
+        if canClamp and canClamp() then
+            local gui = target:FindFirstAncestorOfClass("ScreenGui")
+            if gui then
+                Hud.clamp(gui, target)
+            end
+        end
     end))
     table.insert(connections, UserInputService.InputEnded:Connect(function(input)
         if not dragInput then
@@ -6293,7 +6338,10 @@ function Library:CreateStatus(opts)
     })
     status.Frame = frame
     Hud.autoScale(gui, frame, connections)
-    Hud.drag(frame, frame, connections)
+    Hud.drag(frame, frame, connections, function()
+        return true
+    end)
+    Hud.keepOnScreen(gui, frame, connections)
 
     -- State colour runs down the left edge.
     local edge = create("Frame", {
@@ -6982,7 +7030,12 @@ function Library:CreateStealPanel(opts)
     local countPill, countText = Hud.pill(header, "0", Hud.Bloom)
     countPill.AnchorPoint = Vector2.new(1, 0.5)
     countPill.Position = UDim2.new(1, -14, 0.5, 0)
-    Hud.drag(frame, holder, connections)
+    -- On screen while shown; a panel slid away by its tab is left where it is.
+    local function shown()
+        return not panel.Collapsed
+    end
+    Hud.drag(frame, holder, connections, shown)
+    Hud.keepOnScreen(gui, holder, connections, shown)
     local rule = create("Frame", {
         Position = UDim2.new(0, 14, 0, headerHeight),
         Size = UDim2.new(1, -28, 0, 2),
