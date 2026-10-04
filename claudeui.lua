@@ -3509,12 +3509,13 @@ function Window:_createOpenButton(opts)
         ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
         Parent = face,
     })
-    -- The logo is a square picture with its own background: it fills the disc and gets its own round corner, which
-    -- crops the image itself (the disc's corner does not clip its children).
+    -- The logo is a square picture with its own background: it sits inset in the disc (a white ring between it and
+    -- the pink border) and gets its own round corner, which crops the image itself (the disc's corner does not clip
+    -- its children).
     local icon = create("ImageLabel", {
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.fromScale(1, 1),
+        Size = UDim2.fromScale(0.7, 0.7),
         BackgroundTransparency = 1,
         ScaleType = Enum.ScaleType.Crop,
         ZIndex = 31,
