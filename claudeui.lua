@@ -1157,8 +1157,7 @@ function Tab:Toggle(opts)
     local button, buttonStroke, toggleTitle, toggleDesc, _
     opts, button, buttonStroke, _, toggleTitle, toggleDesc = beginElement(self, opts, { Title = "Name", Description = "Desc", CurrentValue = "Default", Value = "Default" }, "TextButton", 56, "Toggle")
 
-    -- Black and pink: a black card with a white name, a pink bar on the left that lights up with the switch, and a
-    -- deep rose card with a pink rim while it is on.
+    -- Black and pink: a black card with a white name, and a deep rose card with a pink rim while it is on.
     button.BackgroundColor3 = Color3.fromRGB(22, 14, 20)
     button.BackgroundTransparency = 0
     if toggleTitle then
@@ -1170,15 +1169,6 @@ function Tab:Toggle(opts)
     local offRim = Color3.fromRGB(74, 42, 62)
     buttonStroke.Color = offRim
     buttonStroke:SetAttribute("RestColor", offRim)
-    local bar = create("Frame", {
-        Position = UDim2.fromOffset(5, 10),
-        Size = UDim2.new(0, 3, 1, -20),
-        BackgroundColor3 = Theme.Accent,
-        BackgroundTransparency = 0.7,
-        BorderSizePixel = 0,
-        Parent = button,
-    })
-    corner(bar, UDim.new(1, 0))
     local restBackground = button.BackgroundColor3
 
     local pill = create("Frame", {
@@ -1226,10 +1216,9 @@ function Tab:Toggle(opts)
     local function render(animate)
         local on = self_.Value
         local duration = animate and 0.25 or 0
-        -- Accent pink for "on"; the knob goes white, the bar lights up, the card turns blush with a pink rim.
+        -- Accent pink for "on"; the knob goes white, the card turns deep rose with a pink rim.
         tween(pill, { BackgroundColor3 = on and Style.AccentColor or Theme.Surface3 }, duration)
         tween(pillGlow, { ImageTransparency = on and 0.75 or 1 }, duration)
-        tween(bar, { BackgroundTransparency = on and 0 or 0.7 }, duration)
         tween(button, { BackgroundColor3 = on and Color3.fromRGB(62, 16, 42) or restBackground }, duration)
         local rim = on and Theme.Accent or offRim
         buttonStroke:SetAttribute("RestColor", rim)
