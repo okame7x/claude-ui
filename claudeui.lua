@@ -249,6 +249,10 @@ local TOUCH = UserInputService.TouchEnabled and not UserInputService.KeyboardEna
 Library.Touch = TOUCH
 
 local SIDEBAR_WIDTH = 156
+-- Sidebar tabs: black plate, light name, dark rose rim (the selected one wears the pink button face).
+local TAB_BLACK = Color3.fromRGB(22, 14, 20)
+local TAB_RIM = Color3.fromRGB(74, 42, 62)
+local TAB_TEXT = Color3.fromRGB(238, 226, 234)
 local HEADER_HEIGHT = 72
 local CARD_HEIGHT = TOUCH and 54 or 48
 local CARD_HEIGHT_DESC = TOUCH and 70 or 64
@@ -1154,22 +1158,8 @@ function Tab:Button(opts)
 end
 
 function Tab:Toggle(opts)
-    local button, buttonStroke, toggleTitle, toggleDesc, _
-    opts, button, buttonStroke, _, toggleTitle, toggleDesc = beginElement(self, opts, { Title = "Name", Description = "Desc", CurrentValue = "Default", Value = "Default" }, "TextButton", 56, "Toggle")
-
-    -- Black and pink: a black card with a white name, and a deep rose card with a pink rim while it is on.
-    button.BackgroundColor3 = Color3.fromRGB(22, 14, 20)
-    button.BackgroundTransparency = 0
-    if toggleTitle then
-        toggleTitle.TextColor3 = Color3.new(1, 1, 1)
-    end
-    if toggleDesc then
-        toggleDesc.TextColor3 = Color3.fromRGB(226, 188, 210)
-    end
-    local offRim = Color3.fromRGB(74, 42, 62)
-    buttonStroke.Color = offRim
-    buttonStroke:SetAttribute("RestColor", offRim)
-    local restBackground = button.BackgroundColor3
+    local button, buttonStroke
+    opts, button, buttonStroke = beginElement(self, opts, { Title = "Name", Description = "Desc", CurrentValue = "Default", Value = "Default" }, "TextButton", 56, "Toggle")
 
     local pill = create("Frame", {
         AnchorPoint = Vector2.new(1, 0.5),
@@ -1216,13 +1206,9 @@ function Tab:Toggle(opts)
     local function render(animate)
         local on = self_.Value
         local duration = animate and 0.25 or 0
-        -- Accent pink for "on"; the knob goes white, the card turns deep rose with a pink rim.
+        -- Accent pink for "on"; the knob goes white.
         tween(pill, { BackgroundColor3 = on and Style.AccentColor or Theme.Surface3 }, duration)
         tween(pillGlow, { ImageTransparency = on and 0.75 or 1 }, duration)
-        tween(button, { BackgroundColor3 = on and Color3.fromRGB(62, 16, 42) or restBackground }, duration)
-        local rim = on and Theme.Accent or offRim
-        buttonStroke:SetAttribute("RestColor", rim)
-        tween(buttonStroke, { Color = rim }, duration)
         local knobSize = TOUCH and 18 or 14
         tween(knob, {
             Position = on and UDim2.new(0, (TOUCH and 44 or 36) - 3 - knobSize, 0.5, 0) or UDim2.new(0, 3, 0.5, 0),
@@ -4510,10 +4496,12 @@ function Window:Tab(opts, icon)
         self._rightTabs += 1
     end
 
+    -- Black tab with pink: a black plate, light name, pink icon and a dark rose rim that turns pink on hover; the
+    -- selected one shows the pink button face over it.
     local button = create("TextButton", {
         Size = UDim2.new(1, 0, 0, 38),
-        BackgroundColor3 = Style.Plate,
-        BackgroundTransparency = 1,
+        BackgroundColor3 = TAB_BLACK,
+        BackgroundTransparency = 0,
         Text = "",
         AutoButtonColor = false,
         LayoutOrder = right and 1000 + self._rightTabs or #self.Tabs + 1,
@@ -4521,8 +4509,8 @@ function Window:Tab(opts, icon)
     })
     corner(button)
     local buttonStroke = outlineStroke(button, 2)
-    buttonStroke.Transparency = 1
-    buttonStroke:SetAttribute("RestColor", Theme.Outline)
+    buttonStroke.Color = TAB_RIM
+    buttonStroke:SetAttribute("RestColor", TAB_RIM)
     scaleFeedback(button, 1.03, 0.96)
     tab._button = button
     -- Selected tab: the pink button face fading in behind the label (shown by SelectTab).
@@ -4554,7 +4542,7 @@ function Window:Tab(opts, icon)
         Position = UDim2.fromOffset(hasIcon and 36 or 14, 0),
         Size = UDim2.new(1, -(hasIcon and 44 or 22), 1, 0),
         Text = tab.Name,
-        TextColor3 = Color3.fromRGB(24, 10, 18),
+        TextColor3 = TAB_TEXT,
         Parent = button,
     })
 
@@ -4623,14 +4611,12 @@ function Window:Tab(opts, icon)
 
     button.MouseEnter:Connect(function()
         if self.CurrentTab ~= tab then
-            tween(button, { BackgroundTransparency = 0.4 }, 0.12)
-            tween(buttonStroke, { Transparency = 0.5 }, 0.12)
+            tween(buttonStroke, { Color = Theme.Accent }, 0.12)
         end
     end)
     button.MouseLeave:Connect(function()
         if self.CurrentTab ~= tab then
-            tween(button, { BackgroundTransparency = 1 }, 0.2)
-            tween(buttonStroke, { Transparency = 1 }, 0.2)
+            tween(buttonStroke, { Color = TAB_RIM }, 0.2)
         end
     end)
     button.MouseButton1Click:Connect(function()
@@ -4917,9 +4903,10 @@ function Window:SelectTab(tab)
     self._transitionGeneration = generation
 
     if previous then
-        tween(previous._button, { BackgroundTransparency = 1 }, 0.2)
-        tween(previous._stroke, { Transparency = 1 }, 0.2)
-        tween(previous._label, { TextColor3 = Color3.fromRGB(24, 10, 18) }, 0.2)
+        -- Back to the black tab: plate and rim shown again, light name.
+        tween(previous._button, { BackgroundTransparency = 0 }, 0.2)
+        tween(previous._stroke, { Transparency = 0, Color = TAB_RIM }, 0.2)
+        tween(previous._label, { TextColor3 = TAB_TEXT }, 0.2)
         if previous._selectedFace then
             tween(previous._selectedFace, { GroupTransparency = 1 }, 0.2)
         end
