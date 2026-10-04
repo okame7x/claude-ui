@@ -4,7 +4,7 @@ Roblox UI library for Bloom Hub: a white theme with a blossom pink accent and fa
 titles, pink gradient buttons, collapsible sections, right-side tabs and a clean floating icon, plus Status and Steal
 HUD templates. Set `Library.ReducedMotion = true` to stop every animated backdrop.
 
-Navigation tabs have white backgrounds and dark captions. Collapsible toggle-group headers have black backgrounds and white text.
+Navigation tabs have white backgrounds and dark captions. Collapsible toggle-group headers use a berry (rose to plum) gradient with white text.
 
 ## Load
 

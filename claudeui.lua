@@ -5260,7 +5260,7 @@ function Tab:AddSection(text)
 
     local heading = create("TextButton", {
         Size = UDim2.new(1, 0, 0, 32),
-        BackgroundColor3 = Color3.new(0, 0, 0),
+        BackgroundColor3 = Color3.new(1, 1, 1),
         BackgroundTransparency = 0,
         BorderSizePixel = 0,
         AutoButtonColor = false,
@@ -5270,7 +5270,10 @@ function Tab:AddSection(text)
     })
     heading:SetAttribute("NoDrag", true)
     corner(heading)
-    outlineStroke(heading, 2.5)
+    -- Berry header: the accent's deep rose running into plum under a pink rim; stands out on the white page and
+    -- stays in the blossom palette.
+    verticalGradient(heading, ColorSequence.new(Color3.fromRGB(176, 48, 112), Color3.fromRGB(112, 26, 76)), "HeaderGradient")
+    outlineStroke(heading, 2.5).Color = Color3.fromRGB(236, 120, 176)
     scaleFeedback(heading, 1.01, 0.98)
     local headingText = label({
         Position = UDim2.fromOffset(12, 0),
@@ -5279,17 +5282,14 @@ function Tab:AddSection(text)
         TextSize = 13,
         Parent = heading,
     })
-    -- The black header takes the body's bold face (the cartoon title face is too heavy on black), white fading to
-    -- a soft pink like the accent.
     headingText.FontFace = Fonts.Bold
     headingText.TextColor3 = Color3.new(1, 1, 1)
-    verticalGradient(headingText, ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(255, 196, 226)), "TextStyleGradient")
     local chevron = create("ImageLabel", {
         AnchorPoint = Vector2.new(1, 0.5),
         Position = UDim2.new(1, -12, 0.5, 0),
         Size = UDim2.fromOffset(16, 16),
         BackgroundTransparency = 1,
-        ImageColor3 = Style.AccentColor,
+        ImageColor3 = Color3.fromRGB(255, 214, 234),
         ScaleType = Enum.ScaleType.Fit,
         Parent = heading,
     })
