@@ -5276,10 +5276,14 @@ function Tab:AddSection(text)
         Position = UDim2.fromOffset(12, 0),
         Size = UDim2.new(1, -48, 1, 0),
         Text = string.upper(tostring(text or "")),
-        TextSize = 14,
+        TextSize = 13,
         Parent = heading,
     })
-    shinyText(headingText, true)
+    -- The black header takes the body's bold face (the cartoon title face is too heavy on black), white fading to
+    -- a soft pink like the accent.
+    headingText.FontFace = Fonts.Bold
+    headingText.TextColor3 = Color3.new(1, 1, 1)
+    verticalGradient(headingText, ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(255, 196, 226)), "TextStyleGradient")
     local chevron = create("ImageLabel", {
         AnchorPoint = Vector2.new(1, 0.5),
         Position = UDim2.new(1, -12, 0.5, 0),
