@@ -64,6 +64,8 @@ local Steal = Library:CreateStealPanel({
     OnSteal = function(id) end,
     OnQueue = function(id) end,
     OnMove = function(id, step) end,   -- optional: reorder arrows on queued cards
+    Sorts = { "Gen", "Rarity" },   -- optional: sort switch under the header
+    Sort = "Gen", OnSort = function(name) end,
 })
 Steal:SetSubtitle("3 eggs  |  queue 1")
 

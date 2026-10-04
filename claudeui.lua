@@ -6995,7 +6995,8 @@ end
 
 -- Steal HUD: a side panel listing things to take (featured first), each with STEAL and QUEUE; a tab on its inner
 -- edge hides / shows it. opts: { Title, Subtitle, Side = "Right" | "Left", Width, Height, EmptyText, OnSteal,
--- OnQueue, OnMove(id, step) }. panel:SetSubtitle(text) updates the line under the title.
+-- OnQueue, OnMove(id, step), Sorts = { names }, Sort, OnSort(name) }. panel:SetSubtitle(text) updates the line under
+-- the title; panel:SetSort(name) moves the sort switch without calling OnSort.
 function Library:CreateStealPanel(opts)
     opts = type(opts) == "table" and opts or {}
     local panel = { Collapsed = false, Visible = true, OnSteal = opts.OnSteal, OnQueue = opts.OnQueue, OnMove = opts.OnMove, _cards = {}, _connections = {} }
@@ -7065,8 +7066,74 @@ function Library:CreateStealPanel(opts)
     end
     Hud.drag(frame, holder, connections, shown)
     Hud.keepOnScreen(gui, holder, connections, shown)
+    -- Sort switch (opts.Sorts with 2+ names): a segmented bar under the header, a pink pill sliding to the choice.
+    local sortOptions = type(opts.Sorts) == "table" and #opts.Sorts > 1 and opts.Sorts or nil
+    local sortHeight = sortOptions and 34 or 0
+    if sortOptions then
+        local bar = create("Frame", {
+            Position = UDim2.fromOffset(14, headerHeight + 4),
+            Size = UDim2.new(1, -28, 0, 26),
+            BackgroundColor3 = Theme.Surface2,
+            BorderSizePixel = 0,
+            Parent = frame,
+        })
+        bar:SetAttribute("NoDrag", true)
+        corner(bar, UDim.new(1, 0))
+        stroke(bar, Theme.Stroke)
+        local share = 1 / #sortOptions
+        local pill = create("Frame", {
+            Size = UDim2.new(share, -4, 1, -4),
+            Position = UDim2.new(0, 2, 0, 2),
+            BackgroundColor3 = Color3.new(1, 1, 1),
+            BorderSizePixel = 0,
+            Parent = bar,
+        })
+        corner(pill, UDim.new(1, 0))
+        verticalGradient(pill, Style.ButtonFace, "PillGradient")
+        local buttons = {}
+        local function paint(animate)
+            local index = table.find(sortOptions, panel.Sort) or 1
+            tween(pill, { Position = UDim2.new(share * (index - 1), 2, 0, 2) }, animate and 0.22 or 0, Enum.EasingStyle.Quint)
+            for position, button in ipairs(buttons) do
+                tween(button, { TextColor3 = position == index and Color3.new(1, 1, 1) or Theme.Muted }, animate and 0.18 or 0)
+            end
+        end
+        for index, name in ipairs(sortOptions) do
+            local button = create("TextButton", {
+                Position = UDim2.fromScale(share * (index - 1), 0),
+                Size = UDim2.new(share, 0, 1, 0),
+                BackgroundTransparency = 1,
+                AutoButtonColor = false,
+                Text = string.upper(tostring(name)),
+                TextSize = 12,
+                FontFace = Fonts.Bold,
+                TextColor3 = Theme.Muted,
+                ZIndex = 2,
+                Parent = bar,
+            })
+            button:SetAttribute("NoDrag", true)
+            buttons[index] = button
+            button.MouseButton1Click:Connect(function()
+                if panel.Sort == name then
+                    return
+                end
+                panel.Sort = name
+                paint(true)
+                safeCall(opts.OnSort, name)
+            end)
+        end
+        panel.Sort = table.find(sortOptions, opts.Sort) and opts.Sort or sortOptions[1]
+        function panel:SetSort(value)
+            if table.find(sortOptions, value) and value ~= panel.Sort then
+                panel.Sort = value
+                paint(true)
+            end
+        end
+        paint(false)
+    end
+
     local rule = create("Frame", {
-        Position = UDim2.new(0, 14, 0, headerHeight),
+        Position = UDim2.new(0, 14, 0, headerHeight + sortHeight),
         Size = UDim2.new(1, -28, 0, 2),
         BackgroundColor3 = Theme.Accent,
         BorderSizePixel = 0,
@@ -7083,8 +7150,8 @@ function Library:CreateStealPanel(opts)
 
     local footerHeight = 6
     local list = create("ScrollingFrame", {
-        Position = UDim2.fromOffset(0, headerHeight + 4),
-        Size = UDim2.new(1, 0, 1, -(headerHeight + 4 + footerHeight)),
+        Position = UDim2.fromOffset(0, headerHeight + sortHeight + 4),
+        Size = UDim2.new(1, 0, 1, -(headerHeight + sortHeight + 4 + footerHeight)),
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
         ScrollBarThickness = 3,

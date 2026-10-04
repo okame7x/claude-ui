@@ -191,6 +191,10 @@ local Steal = Library:CreateStealPanel({
 	OnQueue = function(id)
 		notify("Queue", "Queued " .. tostring(id))
 	end,
+	Sorts = { "Gen", "Rarity" },
+	OnSort = function(name)
+		notify("Sort", "Sorted by " .. name)
+	end,
 })
 Status:SetStat("STOLEN", 0, { Color3.fromRGB(255, 150, 205), Color3.fromRGB(214, 52, 136) })
 
