@@ -1,11 +1,12 @@
--- Claude UI demo: every element, Chilli-style sections and right-side tabs. Everything only prints / notifies.
+-- Bloom Hub UI demo: every element, Chilli-style sections, right-side tabs, and the Status / Steal HUD templates
+-- fed with fake data. Everything only prints / notifies.
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/okame7x/claude-ui/main/claudeui.lua"))()
 
 local Window = Library:CreateWindow({
-	Name = "Claude UI",
+	Name = "Bloom Hub",
 	LoadingSubtitle = "Demo",
 	ToggleUIKeybind = "RightControl",
-	ConfigurationSaving = { Enabled = true, FolderName = "ClaudeUIDemo", FileName = "default" },
+	ConfigurationSaving = { Enabled = true, FolderName = "BloomHubDemo", FileName = "default" },
 })
 
 local function notify(title, content)
@@ -173,8 +174,73 @@ Interface:CreateButton({
 
 local Credits = Window:CreateTab({ Name = "Credits", Icon = "heart", Side = "Right" })
 Credits:CreateSection({ Name = "Made with" }):CreateParagraph({
-	Title = "Claude UI",
-	Content = "Ghost Pepper UI structure with the Chilli Library style: shiny titles, Rebirth buttons, green toggles.",
+	Title = "Bloom Hub",
+	Content = "Bloom UI structure with the Chilli Library style: shiny titles, Rebirth buttons, green toggles.",
 })
+
+-- HUD templates with fake data (the real hub fills these from the game).
+local Status = Library:CreateStatus({ Title = "Bloom Hub" })
+local Steal = Library:CreateStealPanel({
+	Title = "Steal",
+	Side = "Right",
+	OnSteal = function(id)
+		notify("Steal", "Going for " .. tostring(id))
+	end,
+	OnQueue = function(id)
+		notify("Queue", "Queued " .. tostring(id))
+	end,
+})
+Status:SetStat("STOLEN", 0, { Color3.fromRGB(255, 132, 123), Color3.fromRGB(239, 28, 28) })
+
+local rarityColors = {
+	Legendary = Color3.fromRGB(255, 196, 60),
+	Mythic = Color3.fromRGB(200, 120, 255),
+	Epic = Color3.fromRGB(110, 200, 255),
+	Rare = Color3.fromRGB(77, 255, 122),
+}
+local eggs = {
+	{ Id = "egg1", Name = "Astral Jackalope", Rarity = "Mythic", Value = "$30M/s", Info = "8 kg", State = "In Forest", Featured = true },
+	{ Id = "egg2", Name = "Golden Phoenix", Rarity = "Legendary", Value = "$4.2M/s", Info = "12 kg", State = "Carried by Bob", StateColor = Color3.fromRGB(255, 150, 60) },
+	{ Id = "egg3", Name = "Frost Wolf", Rarity = "Epic", Value = "$850K/s", Info = "6 kg", State = "In Jungle", Queued = 1 },
+	{ Id = "egg4", Name = "Moss Turtle", Rarity = "Rare", Value = "$120K/s", Info = "3 kg", State = "Dropped" },
+}
+for _, egg in eggs do
+	egg.RarityColor = rarityColors[egg.Rarity]
+	egg.Icon = "rbxassetid://72213445673978"
+end
+Steal:SetItems(eggs)
+
+-- Cycle the status through a steal so the steps, bar and pills animate.
+task.spawn(function()
+	local stolen = 0
+	local phases = { "Running to", "Taking", "Delivering" }
+	while Status.Gui.Parent do
+		for phase = 1, 3 do
+			Status:Set({
+				Text = phases[phase] .. " Astral Jackalope",
+				State = "active",
+				Tag = "AUTO FARM",
+				Icon = "rbxassetid://72213445673978",
+				Chips = {
+					{ Text = "MYTHIC", Colors = { Color3.fromRGB(220, 160, 255), Color3.fromRGB(150, 60, 220) } },
+					{ Text = "$30M/s" },
+					{ Text = "8 kg" },
+				},
+				Steps = { Names = { "Run", "Take", "Deliver" }, Current = phase },
+			})
+			task.wait(2)
+		end
+		stolen += 1
+		Status:SetStat("STOLEN", stolen)
+		Status:Set({
+			Text = "Wisp: Steal 20 Enchanted Forest eggs",
+			Detail = "Mission 1/3",
+			State = "waiting",
+			Tag = "WISP",
+			Bar = { Fraction = (stolen % 20) / 20, Text = ("%d/20 eggs  -  %d left"):format(stolen % 20, 20 - stolen % 20) },
+		})
+		task.wait(3)
+	end
+end)
 
 Window:LoadConfig()

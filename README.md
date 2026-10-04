@@ -1,7 +1,8 @@
-# Claude UI
+# Bloom Hub UI
 
-Roblox UI library: the Ghost Pepper UI structure with the Chilli Library look (Gotham SSm titles with the game's
-black outline, shiny headers, red Rebirth buttons, green toggles, collapsible sections, right-side tabs).
+Roblox UI library for Bloom Hub: the Bloom UI structure with the Chilli Library look (Gotham SSm titles with the
+game's black outline, shiny headers, red Rebirth buttons, green toggles, collapsible sections, right-side tabs, a
+clean floating icon), plus Status and Steal HUD templates.
 
 ## Load
 
@@ -15,10 +16,10 @@ local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/okame
 loadstring(game:HttpGet("https://raw.githubusercontent.com/okame7x/claude-ui/main/demo.lua"))()
 ```
 
-## Quick start
+## Window
 
 ```lua
-local Window = Library:CreateWindow({ Name = "My Hub", ToggleUIKeybind = "RightControl" })
+local Window = Library:CreateWindow({ Name = "Bloom Hub", ToggleUIKeybind = "RightControl" })
 
 local Main = Window:CreateTab({ Name = "Main", Icon = "house", SectionsExpanded = true })
 local Farm = Main:CreateSection({ Name = "Auto Farm", Expanded = true })
@@ -33,3 +34,43 @@ Elements: `CreateToggle`, `CreateButton`, `CreateSlider`, `CreateStepper`, `Crea
 `CreateKeybind`, `CreateColorPicker`, `CreateProgress`, `CreateText`, `CreateLabel`, `CreateParagraph`,
 `CreateDivider`, `CreateConfigManager`. Sections: `section:SetExpanded(bool)`, `section:SetTitle(text)`.
 Popups: `Library:Notify`, `Library:Confirm`, `Library:Dialog`.
+
+## Status HUD
+
+```lua
+local Status = Library:CreateStatus({ Title = "Bloom Hub" })
+
+Status:Set({
+    Text = "Taking Astral Jackalope",
+    State = "active",                -- "active" | "waiting" | "idle"
+    Tag = "AUTO FARM",
+    Icon = "rbxassetid://...",       -- or Model = someModel for a spinning 3D preview
+    Chips = { { Text = "MYTHIC", Colors = { c1, c2 } }, { Text = "$30M/s" } },  -- replaces Detail
+    Steps = { Names = { "Run", "Take", "Deliver" }, Current = 2 },             -- or:
+    Bar = { Fraction = 0.35, Text = "7/20 eggs", Colors = { c1, c2 } },
+})
+Status:SetStat("STOLEN", 12)         -- FPS and PING are built in (3 tiles max)
+Status:SetVisible(false)
+Status:Destroy()
+```
+
+## Steal HUD
+
+```lua
+local Steal = Library:CreateStealPanel({
+    Title = "Steal", Side = "Right",
+    OnSteal = function(id) end,
+    OnQueue = function(id) end,
+})
+
+Steal:SetItems({
+    { Id = "uid", Name = "Astral Jackalope", Icon = "rbxassetid://...", Badge = "rbxassetid://...",
+      Rarity = "Mythic", RarityColor = Color3.fromRGB(200, 120, 255), State = "In Forest",
+      Value = "$30M/s", Info = "8 kg", Featured = true, Queued = 1, ActionText = "STEAL" },
+})
+Steal:SetCollapsed(true)             -- the red tab on its edge also toggles it
+Steal:SetVisible(false)
+Steal:Destroy()
+```
+
+Both HUDs scale with the screen, drag by their header and reuse their cards on every update.

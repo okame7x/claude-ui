@@ -91,7 +91,7 @@ Library.Theme = {
 Library.Assets = {
     Shadow = "rbxassetid://6014261993",
     Glow = "rbxassetid://8992230677",
-    Logo = "rbxassetid://139877446989431",
+    Logo = "rbxassetid://102764279440635",
 }
 
 local LUCIDE_URL = "https://raw.githubusercontent.com/Footagesus/Icons/refs/heads/main/lucide/dist/Icons.lua"
@@ -109,7 +109,7 @@ local function loadLucide()
         lucideSet = result
     else
         lucideSet = false
-        warn("[Ghost Pepper UI] lucide icons unavailable: " .. tostring(result))
+        warn("[Bloom UI] lucide icons unavailable: " .. tostring(result))
     end
     return lucideSet
 end
@@ -132,16 +132,16 @@ local FONT_WEIGHTS = {
 function Library:LoadFont(opts)
     opts = normalize(opts, {})
     if type(writefile) ~= "function" or type(isfile) ~= "function" or typeof(getcustomasset) ~= "function" then
-        warn("[Ghost Pepper UI] custom fonts need writefile, isfile and getcustomasset")
+        warn("[Bloom UI] custom fonts need writefile, isfile and getcustomasset")
         return false
     end
     local name = opts.Name or "CustomFont"
     local weights = opts.Weights or FONT_PRESETS[name]
     if type(weights) ~= "table" then
-        warn("[Ghost Pepper UI] no font weights for " .. name)
+        warn("[Bloom UI] no font weights for " .. name)
         return false
     end
-    local folder = opts.Folder or "GhostPepperFonts"
+    local folder = opts.Folder or "BloomFonts"
     pcall(function()
         if type(isfolder) == "function" and type(makefolder) == "function" and not isfolder(folder) then
             makefolder(folder)
@@ -161,7 +161,7 @@ function Library:LoadFont(opts)
             if ok then
                 table.insert(faces, { name = weightName, weight = info[1], style = "normal", assetId = getcustomasset(path) })
             else
-                warn("[Ghost Pepper UI] could not download " .. weightName .. " weight of " .. name)
+                warn("[Bloom UI] could not download " .. weightName .. " weight of " .. name)
             end
         end
     end
@@ -219,7 +219,7 @@ local function resolveIcon(icon)
     elseif type(entry) == "string" then
         return entry
     end
-    warn("[Ghost Pepper UI] unknown lucide icon: " .. name)
+    warn("[Bloom UI] unknown lucide icon: " .. name)
     return nil
 end
 
@@ -243,7 +243,7 @@ local Fonts = Library.Fonts
 local TOUCH = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 Library.Touch = TOUCH
 
-local SIDEBAR_WIDTH = 170
+local SIDEBAR_WIDTH = 156
 local HEADER_HEIGHT = 72
 local CARD_HEIGHT = TOUCH and 54 or 48
 local CARD_HEIGHT_DESC = TOUCH and 70 or 64
@@ -704,7 +704,7 @@ local function safeCall(callback, ...)
     end
     local ok, err = pcall(callback, ...)
     if not ok then
-        warn("[Ghost Pepper UI] callback error: " .. tostring(err))
+        warn("[Bloom UI] callback error: " .. tostring(err))
     end
 end
 
@@ -922,7 +922,7 @@ function Tab:Label(opts)
                 if ok and value ~= nil then
                     text_.Text = tostring(value)
                 elseif not ok then
-                    warn("[Ghost Pepper UI] label update error: " .. tostring(value))
+                    warn("[Bloom UI] label update error: " .. tostring(value))
                 end
                 task.wait(rate)
             end
@@ -2655,7 +2655,8 @@ function Library.Window(_, opts)
     if type(opts.Keybind) == "string" then
         opts.Keybind = Enum.KeyCode[opts.Keybind]
     end
-    local size = opts.Size or (TOUCH and UDim2.fromOffset(600, 440) or UDim2.fromOffset(640, 480))
+    -- Compact by default so the game (its HUD, the egg field) stays visible next to the hub.
+    local size = opts.Size or (TOUCH and UDim2.fromOffset(560, 400) or UDim2.fromOffset(580, 420))
     local keybind = opts.Keybind or Enum.KeyCode.RightControl
 
     local self = setmetatable({
@@ -2688,7 +2689,7 @@ function Library.Window(_, opts)
     table.insert(self._connections, UserInputService.InputEnded:Connect(dispatch("Ended")))
 
     local gui = create("ScreenGui", {
-        Name = opts.Name or "GhostPepperHub",
+        Name = opts.Name or "BloomHub",
         IgnoreGuiInset = true,
         ResetOnSpawn = false,
         DisplayOrder = 999,
@@ -2790,7 +2791,7 @@ function Library.Window(_, opts)
     shinyText(label({
         Position = UDim2.fromOffset(60, 25),
         Size = UDim2.new(1, -70, 0, 20),
-        Text = opts.Title or "Ghost Pepper Hub",
+        Text = opts.Title or "Bloom Hub",
         TextSize = 18,
         Parent = header,
     }))
@@ -2979,11 +2980,11 @@ function Library.Window(_, opts)
 
     local saving = opts.ConfigurationSaving
     if type(saving) == "table" and saving.Enabled ~= false then
-        self.ConfigFolder = saving.FolderName or "GhostPepperHub"
+        self.ConfigFolder = saving.FolderName or "BloomHub"
         self.ConfigName = saving.FileName or "default"
         self._autoSaveEnabled = true
     else
-        self.ConfigFolder = "GhostPepperHub"
+        self.ConfigFolder = "BloomHub"
         self.ConfigName = "default"
         self._autoSaveEnabled = false
     end
@@ -3313,7 +3314,7 @@ function Window:_showLoader(opts)
     label({
         Position = UDim2.fromOffset(78, 30),
         Size = UDim2.new(1, -100, 0, 22),
-        Text = opts.LoadingTitle or opts.Title or "Ghost Pepper Hub",
+        Text = opts.LoadingTitle or opts.Title or "Bloom Hub",
         TextSize = 20,
         Parent = loader,
     })
@@ -3452,14 +3453,11 @@ function Window:_clampToScreen()
     end
 end
 
--- Floating icon that opens / closes the window (replaces the old top pill): a round logo button with an accent halo,
--- a spinning gradient ring (faster while the window is open) and a gentle float. Drag it anywhere; tap to toggle.
+-- Floating icon that opens / closes the window: a clean round logo disc. Drag it anywhere; tap to toggle.
 function Window:_createOpenButton(opts)
     local gui = self.Gui
     local size = TOUCH and 60 or 54
-    -- The button itself is invisible: it only takes the clicks / drags. Inside, the halos come first and the black
-    -- face after them, so the glow stays BEHIND the face (a child always draws over its parent, so the halos
-    -- cannot be children of the face).
+    -- The button itself is invisible: it only takes the clicks / drags; the disc inside is the look.
     local button = create("TextButton", {
         Name = "OpenButton",
         AnchorPoint = Vector2.new(0, 0.5),
@@ -3472,61 +3470,22 @@ function Window:_createOpenButton(opts)
         ZIndex = 30,
         Parent = gui,
     })
-    -- Two vivid red halos: a wide soft one and a tight bright one, breathing and shifting hue.
-    local halo = create("ImageLabel", {
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.fromScale(2.3, 2.3),
-        BackgroundTransparency = 1,
-        Image = Assets.Glow,
-        ImageColor3 = Color3.fromRGB(255, 30, 50),
-        ImageTransparency = 0.35,
-        ZIndex = 28,
-        Parent = button,
-    })
-    local innerHalo = create("ImageLabel", {
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.fromScale(1.55, 1.55),
-        BackgroundTransparency = 1,
-        Image = Assets.Glow,
-        ImageColor3 = Color3.fromRGB(255, 70, 70),
-        ImageTransparency = 0.25,
-        ZIndex = 29,
-        Parent = button,
-    })
-    -- The black face, drawn over the halos; the ring and the logo live on it.
+    -- Clean disc (the current UI's): white face, the logo in its own colours, Chilli's black outline. No halos and
+    -- nothing per frame; the only movement is the input-driven hover / press scale below.
     local face = create("Frame", {
         Size = UDim2.fromScale(1, 1),
-        BackgroundColor3 = Color3.new(0, 0, 0),
+        BackgroundColor3 = Color3.new(1, 1, 1),
         BorderSizePixel = 0,
         ZIndex = 30,
         Parent = button,
     })
     corner(face, UDim.new(1, 0))
-    local ring = create("UIStroke", {
-        Thickness = 3,
-        Color = Color3.new(1, 1, 1),
-        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-        Parent = face,
-    })
-    -- A bright red comet chasing around the ring.
-    local ringGradient = create("UIGradient", {
-        Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(90, 0, 10)),
-            ColorSequenceKeypoint.new(0.35, Color3.fromRGB(255, 25, 50)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 170, 160)),
-            ColorSequenceKeypoint.new(0.65, Color3.fromRGB(255, 25, 50)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(90, 0, 10)),
-        }),
-        Parent = ring,
-    })
+    chilliStroke(face, 2.5)
     local icon = create("ImageLabel", {
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.fromScale(0.56, 0.56),
+        Size = UDim2.fromScale(0.62, 0.62),
         BackgroundTransparency = 1,
-        ImageColor3 = Color3.fromRGB(255, 55, 75),
         ScaleType = Enum.ScaleType.Fit,
         ZIndex = 31,
         Parent = face,
@@ -3534,22 +3493,6 @@ function Window:_createOpenButton(opts)
     applyIcon(icon, opts.Icon or Assets.Logo)
     local buttonScale = create("UIScale", { Parent = button })
     self.OpenButton = button
-
-    -- Ring spin, halo breathing and the icon's float.
-    local clock = 0
-    table.insert(self._frameSteps, function(deltaTime)
-        clock += deltaTime
-        ringGradient.Rotation = (ringGradient.Rotation + deltaTime * (self.Open and 260 or 110)) % 360
-        -- Halos breathe (stronger while open) and drift between crimson and a hot orange-red.
-        local pulse = (math.sin(clock * 2.4) + 1) / 2
-        local shift = (math.sin(clock * 0.9) + 1) / 2
-        halo.ImageTransparency = (self.Open and 0.25 or 0.4) + pulse * 0.15
-        innerHalo.ImageTransparency = (self.Open and 0.15 or 0.3) + (1 - pulse) * 0.15
-        halo.ImageColor3 = Color3.fromRGB(255, 20, 45):Lerp(Color3.fromRGB(255, 75, 35), shift)
-        innerHalo.ImageColor3 = Color3.fromRGB(255, 60, 80):Lerp(Color3.fromRGB(255, 110, 70), 1 - shift)
-        icon.ImageColor3 = Color3.fromRGB(255, 45, 70):Lerp(Color3.fromRGB(255, 120, 110), pulse * 0.5)
-        icon.Position = UDim2.new(0.5, 0, 0.5, math.sin(clock * 1.8) * 2)
-    end)
 
     button.MouseEnter:Connect(function()
         tween(buttonScale, { Scale = 1.08 }, 0.15)
@@ -5101,7 +5044,7 @@ function Window:Destroy()
     end)
 end
 
--- Ghost Pepper compatibility layer. The hub groups controls in sections and
+-- Bloom compatibility layer. The hub groups controls in sections and
 -- uses Add* names, while the original library exposes controls directly on tabs.
 local function compatibilityOptions(idOrOptions, options)
     local id
@@ -5879,6 +5822,875 @@ Tab.CreateConfigManager = Tab.ConfigManager
 function Library:Notification(opts)
     return self:Notify(opts)
 end
+
+-- Bloom HUD templates: Status (what the hub is doing) and Steal (things to take). The library only draws them; the
+-- hub pushes its data with status:Set(info) and steal:SetItems(items). Both sit in their own ScreenGui, scale with
+-- the screen (designed at 1280x720), can be dragged by their header and use the Chilli look of the window.
+local Hud = {
+    StateColors = {
+        active = { Color3.fromRGB(58, 255, 55), Color3.fromRGB(20, 140, 30) },
+        waiting = { Color3.fromRGB(255, 214, 84), Color3.fromRGB(230, 140, 20) },
+        idle = { Color3.fromRGB(170, 174, 184), Color3.fromRGB(90, 94, 110) },
+    },
+    StateWords = { active = "WORKING", waiting = "WAITING", idle = "IDLE" },
+    Red = { Color3.fromRGB(255, 132, 123), Color3.fromRGB(239, 28, 28) },
+    Green = { Color3.fromRGB(58, 255, 55), Color3.fromRGB(20, 109, 0) },
+    Grey = { Color3.fromRGB(206, 212, 224), Color3.fromRGB(110, 116, 132) },
+    Gold = { Color3.fromRGB(255, 214, 84), Color3.fromRGB(255, 150, 20) },
+}
+Library.Hud = Hud
+
+function Hud.screen(name, order)
+    local gui = create("ScreenGui", {
+        Name = name,
+        IgnoreGuiInset = true,
+        ResetOnSpawn = false,
+        DisplayOrder = order or 990,
+        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+    })
+    pcall(function()
+        if typeof(syn) == "table" and typeof(syn.protect_gui) == "function" then
+            syn.protect_gui(gui)
+        end
+    end)
+    gui.Parent = defaultParent()
+    return gui
+end
+
+-- One UIScale from the screen size, so the HUD keeps its proportions on phones and on big monitors.
+function Hud.autoScale(gui, target, connections)
+    local scale = create("UIScale", { Parent = target })
+    local function fit()
+        local size = gui.AbsoluteSize
+        if size.X <= 0 or size.Y <= 0 then
+            return
+        end
+        scale.Scale = math.clamp(math.min(size.X / 1280, size.Y / 720) * (TOUCH and 1.15 or 1), 0.55, 1.25)
+    end
+    fit()
+    table.insert(connections, gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit))
+    return scale
+end
+
+-- Drags `target` by `handle` with the touch / mouse that started it (another finger never takes over).
+function Hud.drag(handle, target, connections)
+    local dragInput, startPoint, startPosition
+    handle.InputBegan:Connect(function(input)
+        if dragInput or not isPress(input) then
+            return
+        end
+        dragInput = input
+        startPoint = Vector2.new(input.Position.X, input.Position.Y)
+        startPosition = target.Position
+    end)
+    table.insert(connections, UserInputService.InputChanged:Connect(function(input)
+        if not dragInput or not isMove(input) then
+            return
+        end
+        if dragInput.UserInputType == Enum.UserInputType.Touch and input ~= dragInput then
+            return
+        end
+        if dragInput.UserInputType ~= Enum.UserInputType.Touch and input.UserInputType ~= Enum.UserInputType.MouseMovement then
+            return
+        end
+        local delta = Vector2.new(input.Position.X, input.Position.Y) - startPoint
+        target.Position = UDim2.new(startPosition.X.Scale, startPosition.X.Offset + delta.X, startPosition.Y.Scale, startPosition.Y.Offset + delta.Y)
+    end))
+    table.insert(connections, UserInputService.InputEnded:Connect(function(input)
+        if not dragInput then
+            return
+        end
+        if input == dragInput or (dragInput.UserInputType ~= Enum.UserInputType.Touch and isPress(input)) then
+            dragInput = nil
+        end
+    end))
+end
+
+-- Panel plate: the window's dark surface, a soft gloss and Chilli's thick black outline.
+function Hud.plate(parent, props)
+    local frame = create("Frame", {
+        BackgroundColor3 = Theme.Background:Lerp(Chilli.Plate, 0.35),
+        BackgroundTransparency = 0.06,
+        BorderSizePixel = 0,
+        Parent = parent,
+    })
+    for key, value in pairs(props or {}) do
+        frame[key] = value
+    end
+    corner(frame, UDim.new(0, 12))
+    chilliStroke(frame, 3)
+    create("UIGradient", {
+        Name = "Gloss",
+        Rotation = 90,
+        Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(170, 164, 172)),
+        Parent = frame,
+    })
+    return frame
+end
+
+-- Small inset (icon wells, stat tiles, bar tracks): half-transparent black with a black outline.
+function Hud.inset(parent, props, radius)
+    local frame = create("Frame", {
+        BackgroundColor3 = Chilli.Plate,
+        BackgroundTransparency = 0.45,
+        BorderSizePixel = 0,
+        Parent = parent,
+    })
+    for key, value in pairs(props or {}) do
+        frame[key] = value
+    end
+    corner(frame, radius or UDim.new(0, 8))
+    chilliStroke(frame, 2)
+    return frame
+end
+
+-- Gradient pill with outlined text; returns frame, text label, gradient.
+function Hud.pill(parent, text, colors, layoutOrder)
+    local frame = create("Frame", {
+        Size = UDim2.fromOffset(0, 18),
+        AutomaticSize = Enum.AutomaticSize.X,
+        BackgroundColor3 = Color3.new(1, 1, 1),
+        BorderSizePixel = 0,
+        LayoutOrder = layoutOrder or 0,
+        Parent = parent,
+    })
+    corner(frame, UDim.new(1, 0))
+    chilliStroke(frame, 1.5)
+    local gradient = chilliGradient(frame, ColorSequence.new(colors[1], colors[2]))
+    padding(frame, 8, 8)
+    local text_ = label({
+        Size = UDim2.new(0, 0, 1, 0),
+        AutomaticSize = Enum.AutomaticSize.X,
+        Text = text,
+        TextSize = 11,
+        TextColor3 = Color3.new(1, 1, 1),
+        TextTruncate = Enum.TextTruncate.None,
+        Parent = frame,
+    })
+    return frame, text_, gradient
+end
+
+function Hud.setColors(gradient, colors)
+    gradient.Color = ColorSequence.new(colors[1], colors[2] or colors[1])
+end
+
+-- A clean, centered copy of `source` in `viewport` (scripts / sounds / effects stripped, parts anchored).
+function Hud.preview(viewport, camera, source)
+    viewport:ClearAllChildren()
+    camera.Parent = viewport
+    local copy
+    pcall(function()
+        local archivable = source.Archivable
+        source.Archivable = true
+        copy = source:Clone()
+        source.Archivable = archivable
+    end)
+    if not copy then
+        return nil
+    end
+    if not copy:IsA("Model") then
+        local holder = Instance.new("Model")
+        copy.Parent = holder
+        copy = holder
+    end
+    for _, descendant in copy:GetDescendants() do
+        if descendant:IsA("LuaSourceContainer") or descendant:IsA("Sound") or descendant:IsA("ParticleEmitter")
+            or descendant:IsA("Beam") or descendant:IsA("Trail") or descendant:IsA("Light") or descendant:IsA("BillboardGui")
+            or descendant:IsA("ProximityPrompt") or descendant:IsA("ClickDetector") then
+            descendant:Destroy()
+        elseif descendant:IsA("BasePart") then
+            descendant.Anchored = true
+            descendant.CanCollide = false
+        end
+    end
+    local ok, boxFrame, boxSize = pcall(copy.GetBoundingBox, copy)
+    if not ok then
+        copy:Destroy()
+        return nil
+    end
+    copy:PivotTo(boxFrame:ToObjectSpace(copy:GetPivot()))
+    copy.Parent = viewport
+    local radius = boxSize.Magnitude / 2
+    return { model = copy, base = copy:GetPivot(), distance = radius / math.tan(math.rad(camera.FieldOfView / 2)) * 1.08 }
+end
+
+-- Status HUD: preview (icon or a spinning 3D model), state / tag pills, a title, a detail line or chips, a steps line
+-- or a progress bar, and stat tiles (FPS and PING built in, more through SetStat).
+-- info for status:Set: { Text, Detail, State = "active" | "waiting" | "idle", Tag, Icon, Model,
+--   Chips = { { Text, Colors = { c1, c2 } } }, Steps = { Names = { ... }, Current = n },
+--   Bar = { Fraction = 0..1, Text, Colors = { c1, c2 } } }
+function Library:CreateStatus(opts)
+    opts = type(opts) == "table" and opts or {}
+    local status = { Visible = true, _connections = {}, _stats = {}, _statOrder = 0 }
+    local connections = status._connections
+    local gui = Hud.screen(opts.Name or "BloomStatus", 995)
+    status.Gui = gui
+
+    local frame = Hud.plate(gui, {
+        AnchorPoint = Vector2.new(0.5, 0),
+        Position = opts.Position or UDim2.new(0.5, 0, 0, 12),
+        Size = UDim2.fromOffset(520, 112),
+    })
+    status.Frame = frame
+    Hud.autoScale(gui, frame, connections)
+    Hud.drag(frame, frame, connections)
+
+    -- State colour runs down the left edge.
+    local edge = create("Frame", {
+        Position = UDim2.fromOffset(5, 14),
+        Size = UDim2.new(0, 4, 1, -28),
+        BackgroundColor3 = Color3.new(1, 1, 1),
+        BorderSizePixel = 0,
+        Parent = frame,
+    })
+    corner(edge, UDim.new(1, 0))
+    local edgeGradient = chilliGradient(edge, ColorSequence.new(Hud.StateColors.idle[1], Hud.StateColors.idle[2]))
+
+    local well = Hud.inset(frame, {
+        Position = UDim2.fromOffset(16, 14),
+        Size = UDim2.fromOffset(84, 84),
+        ClipsDescendants = true,
+    }, UDim.new(0, 10))
+    local icon = create("ImageLabel", {
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.fromScale(0.5, 0.5),
+        Size = UDim2.fromScale(0.78, 0.78),
+        BackgroundTransparency = 1,
+        ScaleType = Enum.ScaleType.Fit,
+        Parent = well,
+    })
+    applyIcon(icon, opts.Logo or Assets.Logo)
+    local viewport = create("ViewportFrame", {
+        Size = UDim2.fromScale(1, 1),
+        BackgroundTransparency = 1,
+        Ambient = Color3.fromRGB(190, 190, 200),
+        LightColor = Color3.new(1, 1, 1),
+        LightDirection = Vector3.new(-1, -1, -1),
+        Visible = false,
+        Parent = well,
+    })
+    local camera = create("Camera", { FieldOfView = 40, Parent = viewport })
+    viewport.CurrentCamera = camera
+
+    local textX, textWidth = 112, -(112 + 112)
+    local pills = create("Frame", {
+        Position = UDim2.fromOffset(textX, 12),
+        Size = UDim2.new(1, textWidth, 0, 18),
+        BackgroundTransparency = 1,
+        Parent = frame,
+    })
+    create("UIListLayout", {
+        FillDirection = Enum.FillDirection.Horizontal,
+        VerticalAlignment = Enum.VerticalAlignment.Center,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 6),
+        Parent = pills,
+    })
+    local _, stateText, stateGradient = Hud.pill(pills, "IDLE", Hud.StateColors.idle, 1)
+    local tagPill, tagText = Hud.pill(pills, "", Hud.Red, 2)
+    tagPill.Visible = false
+
+    local title = shinyText(label({
+        Position = UDim2.fromOffset(textX, 34),
+        Size = UDim2.new(1, textWidth, 0, 22),
+        Text = opts.Title or "Bloom Hub",
+        TextSize = 17,
+        Parent = frame,
+    }))
+    local detail = label({
+        Position = UDim2.fromOffset(textX, 57),
+        Size = UDim2.new(1, textWidth, 0, 16),
+        Text = opts.Detail or "",
+        TextSize = 12,
+        FontFace = Fonts.Medium,
+        TextColor3 = Theme.Muted,
+        Parent = frame,
+    })
+    local chips = create("Frame", {
+        Position = UDim2.fromOffset(textX, 56),
+        Size = UDim2.new(1, textWidth, 0, 18),
+        BackgroundTransparency = 1,
+        Visible = false,
+        Parent = frame,
+    })
+    create("UIListLayout", {
+        FillDirection = Enum.FillDirection.Horizontal,
+        VerticalAlignment = Enum.VerticalAlignment.Center,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 6),
+        Parent = chips,
+    })
+    local chipPool = {}
+
+    -- Bottom line: either the steps (nodes on a line, captions under) or a progress bar.
+    local bottom = create("Frame", {
+        Position = UDim2.fromOffset(textX, 80),
+        Size = UDim2.new(1, textWidth, 0, 20),
+        BackgroundTransparency = 1,
+        Parent = frame,
+    })
+    local barTrack = Hud.inset(bottom, { Size = UDim2.new(1, 0, 0, 16), Position = UDim2.fromOffset(0, 2), Visible = false }, UDim.new(1, 0))
+    local barFill = create("Frame", {
+        Size = UDim2.fromScale(0, 1),
+        BackgroundColor3 = Color3.new(1, 1, 1),
+        BorderSizePixel = 0,
+        Parent = barTrack,
+    })
+    corner(barFill, UDim.new(1, 0))
+    local barGradient = chilliGradient(barFill, ColorSequence.new(Hud.Green[1], Hud.Green[2]))
+    local barText = label({
+        Size = UDim2.fromScale(1, 1),
+        Text = "",
+        TextSize = 10,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        ZIndex = 3,
+        Parent = barTrack,
+    })
+    local steps = create("Frame", { Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Visible = false, Parent = bottom })
+    local stepLine = create("Frame", {
+        AnchorPoint = Vector2.new(0, 0.5),
+        Position = UDim2.new(0, 8, 0, 6),
+        Size = UDim2.new(1, -16, 0, 4),
+        BackgroundColor3 = Chilli.Plate,
+        BackgroundTransparency = 0.45,
+        BorderSizePixel = 0,
+        Parent = steps,
+    })
+    corner(stepLine, UDim.new(1, 0))
+    local stepFill = create("Frame", {
+        Size = UDim2.fromScale(0, 1),
+        BackgroundColor3 = Color3.new(1, 1, 1),
+        BorderSizePixel = 0,
+        Parent = stepLine,
+    })
+    corner(stepFill, UDim.new(1, 0))
+    chilliGradient(stepFill, ColorSequence.new(Hud.Green[1], Hud.Green[2]))
+    local stepNodes = {}
+
+    -- Stat tiles on the right.
+    local column = create("Frame", {
+        AnchorPoint = Vector2.new(1, 0.5),
+        Position = UDim2.new(1, -14, 0.5, 0),
+        Size = UDim2.fromOffset(92, 88),
+        BackgroundTransparency = 1,
+        Parent = frame,
+    })
+    create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 5), Parent = column })
+
+    function status:SetStat(name, value, colors)
+        local tile = status._stats[name]
+        if not tile then
+            if status._statOrder >= 3 then
+                return
+            end
+            status._statOrder += 1
+            local frame_ = Hud.inset(column, { Size = UDim2.new(1, 0, 0, 26), LayoutOrder = status._statOrder })
+            label({
+                Position = UDim2.fromOffset(8, 0),
+                Size = UDim2.new(0.5, 0, 1, 0),
+                Text = string.upper(name),
+                TextSize = 10,
+                FontFace = Fonts.Medium,
+                TextColor3 = Theme.Muted,
+                Parent = frame_,
+            })
+            local valueLabel = label({
+                AnchorPoint = Vector2.new(1, 0),
+                Position = UDim2.new(1, -8, 0, 0),
+                Size = UDim2.new(0.6, 0, 1, 0),
+                TextSize = 13,
+                TextColor3 = Color3.new(1, 1, 1),
+                TextXAlignment = Enum.TextXAlignment.Right,
+                Parent = frame_,
+            })
+            tile = { value = valueLabel, gradient = chilliGradient(valueLabel, ColorSequence.new(Hud.Green[1], Hud.Green[2])) }
+            status._stats[name] = tile
+        end
+        tile.value.Text = tostring(value)
+        if colors then
+            Hud.setColors(tile.gradient, colors)
+        end
+    end
+    status:SetStat("FPS", "--")
+    status:SetStat("PING", "--")
+
+    local function renderSteps(info)
+        local names = info and info.Names
+        steps.Visible = type(names) == "table" and #names > 0
+        if not steps.Visible then
+            return
+        end
+        if #stepNodes ~= #names then
+            for _, node in stepNodes do
+                node.dot:Destroy()
+                node.caption:Destroy()
+            end
+            table.clear(stepNodes)
+            for index, name in ipairs(names) do
+                local x = #names > 1 and (index - 1) / (#names - 1) or 0.5
+                local dot = create("Frame", {
+                    AnchorPoint = Vector2.new(0.5, 0.5),
+                    Position = UDim2.new(x, index == 1 and 8 or (index == #names and -8 or 0), 0, 6),
+                    Size = UDim2.fromOffset(12, 12),
+                    BackgroundColor3 = Color3.new(1, 1, 1),
+                    BorderSizePixel = 0,
+                    ZIndex = 2,
+                    Parent = steps,
+                })
+                corner(dot, UDim.new(1, 0))
+                chilliStroke(dot, 2)
+                local caption = label({
+                    AnchorPoint = Vector2.new(x, 0),
+                    Position = UDim2.new(x, 0, 0, 11),
+                    Size = UDim2.fromOffset(70, 12),
+                    Text = string.upper(name),
+                    TextSize = 9,
+                    TextXAlignment = index == 1 and Enum.TextXAlignment.Left or (index == #names and Enum.TextXAlignment.Right or Enum.TextXAlignment.Center),
+                    TextTruncate = Enum.TextTruncate.None,
+                    Parent = steps,
+                })
+                table.insert(stepNodes, { dot = dot, caption = caption })
+            end
+        end
+        local current = math.clamp(tonumber(info.Current) or 1, 1, #names)
+        tween(stepFill, { Size = UDim2.fromScale(#names > 1 and (current - 1) / (#names - 1) or 1, 1) }, 0.25)
+        for index, node in stepNodes do
+            local done, now = index < current, index == current
+            node.dot.BackgroundColor3 = done and Hud.Green[1] or (now and Color3.new(1, 1, 1) or Color3.fromRGB(60, 58, 66))
+            node.caption.TextColor3 = now and Color3.new(1, 1, 1) or (done and Hud.Green[1] or Theme.Muted)
+        end
+    end
+
+    local function renderBar(info)
+        barTrack.Visible = type(info) == "table"
+        if not barTrack.Visible then
+            return
+        end
+        tween(barFill, { Size = UDim2.fromScale(math.clamp(tonumber(info.Fraction) or 0, 0, 1), 1) }, 0.25)
+        Hud.setColors(barGradient, info.Colors or Hud.Green)
+        barText.Text = info.Text or ""
+    end
+
+    local function renderChips(list)
+        local show = type(list) == "table" and #list > 0
+        chips.Visible = show
+        detail.Visible = not show
+        if not show then
+            return
+        end
+        for index, chip in ipairs(list) do
+            local entry = chipPool[index]
+            if not entry then
+                local frame_, text_, gradient = Hud.pill(chips, "", Hud.Grey, index)
+                entry = { frame = frame_, text = text_, gradient = gradient }
+                chipPool[index] = entry
+            end
+            entry.frame.Visible = true
+            entry.text.Text = tostring(chip.Text or "")
+            Hud.setColors(entry.gradient, chip.Colors or Hud.Grey)
+        end
+        for index = #list + 1, #chipPool do
+            chipPool[index].frame.Visible = false
+        end
+    end
+
+    function status:SetModel(model)
+        if model == status._modelSource then
+            return
+        end
+        status._modelSource = model
+        status._preview = model and Hud.preview(viewport, camera, model) or nil
+        viewport.Visible = status._preview ~= nil
+        icon.Visible = status._preview == nil
+    end
+
+    function status:Set(info)
+        info = type(info) == "table" and info or {}
+        local state = Hud.StateColors[info.State] and info.State or "idle"
+        stateText.Text = Hud.StateWords[state]
+        Hud.setColors(stateGradient, Hud.StateColors[state])
+        Hud.setColors(edgeGradient, Hud.StateColors[state])
+        tagPill.Visible = type(info.Tag) == "string" and info.Tag ~= ""
+        tagText.Text = info.Tag or ""
+        title.Text = info.Text or opts.Title or "Bloom Hub"
+        detail.Text = info.Detail or ""
+        if info.Icon ~= status._icon then
+            status._icon = info.Icon
+            applyIcon(icon, info.Icon or opts.Logo or Assets.Logo)
+        end
+        status:SetModel(info.Model)
+        renderChips(info.Chips)
+        renderSteps(info.Steps)
+        renderBar(not steps.Visible and info.Bar or nil)
+    end
+
+    function status:SetVisible(value)
+        status.Visible = value ~= false
+        frame.Visible = status.Visible
+    end
+
+    function status:Destroy()
+        for _, connection in connections do
+            pcall(function() connection:Disconnect() end)
+        end
+        table.clear(connections)
+        gui:Destroy()
+    end
+
+    -- FPS / PING every half second; the preview turns slowly while it is shown.
+    local frames, clock, spin = 0, 0, 0
+    table.insert(connections, RunService.RenderStepped:Connect(function(deltaTime)
+        frames += 1
+        clock += deltaTime
+        if clock >= 0.5 then
+            local fps = math.floor(frames / clock + 0.5)
+            frames, clock = 0, 0
+            status:SetStat("FPS", fps, fps >= 50 and Hud.Green or (fps >= 25 and Hud.Gold or Hud.Red))
+            local ok, ping = pcall(function()
+                return LocalPlayer:GetNetworkPing() * 1000
+            end)
+            if ok and ping then
+                ping = math.floor(ping + 0.5)
+                status:SetStat("PING", ping, ping <= 120 and Hud.Green or (ping <= 250 and Hud.Gold or Hud.Red))
+            end
+        end
+        local preview = status._preview
+        if preview and status.Visible then
+            spin = (spin + deltaTime * 40) % 360
+            camera.CFrame = CFrame.Angles(0, math.rad(spin), 0) * CFrame.new(0, preview.distance * 0.18, preview.distance)
+            camera.CFrame = CFrame.lookAt(camera.CFrame.Position, Vector3.zero)
+        end
+    end))
+
+    status:Set({ Text = opts.Title or "Bloom Hub", Detail = opts.Detail or "Nothing running", State = "idle" })
+    return status
+end
+
+-- One pooled steal card (reused by SetItems, so a refresh never rebuilds the list).
+function Hud.stealCard(panel, list)
+    local card = {}
+    local frame = create("Frame", {
+        Size = UDim2.new(1, 0, 0, 74),
+        BackgroundColor3 = Theme.Surface2:Lerp(Chilli.Plate, 0.35),
+        BackgroundTransparency = 0.08,
+        BorderSizePixel = 0,
+        Parent = list,
+    })
+    corner(frame, UDim.new(0, 10))
+    chilliStroke(frame, 2.5)
+    create("UIGradient", {
+        Name = "Gloss",
+        Rotation = 90,
+        Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(176, 170, 178)),
+        Parent = frame,
+    })
+    card.frame = frame
+    local accent = create("Frame", {
+        Position = UDim2.fromOffset(5, 10),
+        Size = UDim2.new(0, 4, 1, -20),
+        BackgroundColor3 = Color3.new(1, 1, 1),
+        BorderSizePixel = 0,
+        Parent = frame,
+    })
+    corner(accent, UDim.new(1, 0))
+    card.accent = chilliGradient(accent, ColorSequence.new(Color3.new(1, 1, 1), Color3.new(1, 1, 1)))
+
+    card.well = Hud.inset(frame, { Position = UDim2.fromOffset(15, 11), Size = UDim2.fromOffset(52, 52) })
+    card.icon = create("ImageLabel", {
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.fromScale(0.5, 0.5),
+        Size = UDim2.fromScale(0.86, 0.86),
+        BackgroundTransparency = 1,
+        ScaleType = Enum.ScaleType.Fit,
+        Parent = card.well,
+    })
+    card.badge = create("ImageLabel", {
+        AnchorPoint = Vector2.new(1, 1),
+        Position = UDim2.new(1, 6, 1, 6),
+        Size = UDim2.fromOffset(24, 24),
+        BackgroundColor3 = Chilli.Plate,
+        BackgroundTransparency = 0.2,
+        ScaleType = Enum.ScaleType.Fit,
+        Visible = false,
+        ZIndex = 3,
+        Parent = card.well,
+    })
+    corner(card.badge, UDim.new(1, 0))
+    chilliStroke(card.badge, 1.5)
+
+    local textX = 76
+    card.name = shinyText(label({
+        Position = UDim2.fromOffset(textX, 8),
+        Size = UDim2.new(1, -(textX + 92), 0, 18),
+        TextSize = 14,
+        Parent = frame,
+    }))
+    card.line = label({
+        Position = UDim2.fromOffset(textX, 27),
+        Size = UDim2.new(1, -(textX + 92), 0, 14),
+        TextSize = 11,
+        RichText = true,
+        Parent = frame,
+    })
+    local chips = create("Frame", {
+        Position = UDim2.fromOffset(textX, 46),
+        Size = UDim2.new(1, -(textX + 92), 0, 18),
+        BackgroundTransparency = 1,
+        Parent = frame,
+    })
+    create("UIListLayout", {
+        FillDirection = Enum.FillDirection.Horizontal,
+        VerticalAlignment = Enum.VerticalAlignment.Center,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 5),
+        Parent = chips,
+    })
+    card.chips = chips
+    card.valuePill, card.valueText = Hud.pill(chips, "", Hud.Green, 1)
+    card.infoPill, card.infoText = Hud.pill(chips, "", Hud.Grey, 2)
+
+    card.best = Hud.pill(frame, "BEST", Hud.Gold)
+    card.best.AnchorPoint = Vector2.new(1, 0)
+    card.best.Position = UDim2.new(1, -8, 0, -8)
+    card.best.ZIndex = 4
+    card.best.Visible = false
+
+    -- Actions: Chilli's red Rebirth button to steal now, a plate button to queue (shows the queue spot).
+    card.steal = create("TextButton", {
+        AnchorPoint = Vector2.new(1, 0),
+        Position = UDim2.new(1, -10, 0, 10),
+        Size = UDim2.fromOffset(76, 30),
+        BackgroundTransparency = 1,
+        Text = "",
+        AutoButtonColor = false,
+        Parent = frame,
+    })
+    rebirthFace(card.steal, 1)
+    scaleFeedback(card.steal, 1.05, 0.94)
+    card.stealText = shinyText(label({
+        Size = UDim2.new(1, 0, 1, -4),
+        Text = "STEAL",
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        ZIndex = 3,
+        Parent = card.steal,
+    }))
+    card.queue = create("TextButton", {
+        AnchorPoint = Vector2.new(1, 0),
+        Position = UDim2.new(1, -10, 0, 44),
+        Size = UDim2.fromOffset(76, 22),
+        BackgroundColor3 = Chilli.Plate,
+        BackgroundTransparency = 0.4,
+        Text = "",
+        AutoButtonColor = false,
+        Parent = frame,
+    })
+    corner(card.queue, UDim.new(0, 7))
+    chilliStroke(card.queue, 2)
+    scaleFeedback(card.queue, 1.05, 0.94)
+    card.queueText = label({
+        Size = UDim2.fromScale(1, 1),
+        Text = "+ QUEUE",
+        TextSize = 11,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        Parent = card.queue,
+    })
+    card.steal.MouseButton1Click:Connect(function()
+        if card.id ~= nil then
+            safeCall(panel.OnSteal, card.id)
+        end
+    end)
+    card.queue.MouseButton1Click:Connect(function()
+        if card.id ~= nil then
+            safeCall(panel.OnQueue, card.id)
+        end
+    end)
+    return card
+end
+
+-- item: { Id, Name, Icon, Badge, Rarity, RarityColor, State, StateColor, Value, Info, Featured, Queued, ActionText }
+function Hud.paintCard(card, item, order)
+    card.id = item.Id
+    local featured = item.Featured == true
+    card.frame.LayoutOrder = order
+    card.frame.Size = UDim2.new(1, 0, 0, featured and 84 or 74)
+    card.well.Size = UDim2.fromOffset(featured and 60 or 52, featured and 60 or 52)
+    if item.Icon ~= card.iconValue then
+        card.iconValue = item.Icon
+        card.icon.Image = ""
+        if item.Icon then
+            applyIcon(card.icon, item.Icon)
+        end
+    end
+    card.badge.Visible = item.Badge ~= nil
+    if item.Badge and item.Badge ~= card.badgeValue then
+        card.badgeValue = item.Badge
+        applyIcon(card.badge, item.Badge)
+    end
+    card.name.Text = tostring(item.Name or "")
+    local rarityColor = item.RarityColor or Color3.new(1, 1, 1)
+    local parts = {}
+    if item.Rarity then
+        table.insert(parts, ('<font color="#%s">%s</font>'):format(rarityColor:ToHex(), string.upper(tostring(item.Rarity))))
+    end
+    if item.State then
+        table.insert(parts, ('<font color="#%s">%s</font>'):format((item.StateColor or Theme.Muted):ToHex(), tostring(item.State)))
+    end
+    card.line.Text = table.concat(parts, "  ")
+    Hud.setColors(card.accent, { rarityColor:Lerp(Color3.new(1, 1, 1), 0.25), rarityColor })
+    card.valuePill.Visible = item.Value ~= nil
+    card.valueText.Text = tostring(item.Value or "")
+    card.infoPill.Visible = item.Info ~= nil
+    card.infoText.Text = tostring(item.Info or "")
+    card.best.Visible = featured
+    card.stealText.Text = item.ActionText or "STEAL"
+    card.queueText.Text = item.Queued and ("#" .. tostring(item.Queued)) or "+ QUEUE"
+end
+
+-- Steal HUD: a side panel listing things to take (featured first), each with STEAL and QUEUE; a tab on its inner
+-- edge hides / shows it. opts: { Title, Side = "Right" | "Left", Width, Height, EmptyText, OnSteal, OnQueue }.
+function Library:CreateStealPanel(opts)
+    opts = type(opts) == "table" and opts or {}
+    local panel = { Collapsed = false, Visible = true, OnSteal = opts.OnSteal, OnQueue = opts.OnQueue, _cards = {}, _connections = {} }
+    local connections = panel._connections
+    local gui = Hud.screen(opts.Name or "BloomSteal", 994)
+    panel.Gui = gui
+    local right = opts.Side ~= "Left"
+    local width, height = opts.Width or 310, opts.Height or 390
+    local openPosition = UDim2.new(right and 1 or 0, right and -16 or 16, 0.5, 0)
+
+    local holder = create("Frame", {
+        AnchorPoint = Vector2.new(right and 1 or 0, 0.5),
+        Position = openPosition,
+        Size = UDim2.fromOffset(width, height),
+        BackgroundTransparency = 1,
+        Parent = gui,
+    })
+    panel.Holder = holder
+    Hud.autoScale(gui, holder, connections)
+    local frame = Hud.plate(holder, { Size = UDim2.fromScale(1, 1) })
+
+    local header = create("Frame", { Size = UDim2.new(1, 0, 0, 46), BackgroundTransparency = 1, Parent = frame })
+    shinyText(label({
+        Position = UDim2.fromOffset(16, 0),
+        Size = UDim2.new(1, -90, 1, 0),
+        Text = string.upper(opts.Title or "Steal"),
+        TextSize = 16,
+        Parent = header,
+    }))
+    local countPill, countText = Hud.pill(header, "0", Hud.Red)
+    countPill.AnchorPoint = Vector2.new(1, 0.5)
+    countPill.Position = UDim2.new(1, -14, 0.5, 0)
+    Hud.drag(header, holder, connections)
+    create("Frame", {
+        Position = UDim2.new(0, 14, 0, 45),
+        Size = UDim2.new(1, -28, 0, 2),
+        BackgroundColor3 = Chilli.Plate,
+        BackgroundTransparency = 0.4,
+        BorderSizePixel = 0,
+        Parent = frame,
+    })
+
+    local list = create("ScrollingFrame", {
+        Position = UDim2.fromOffset(0, 50),
+        Size = UDim2.new(1, 0, 1, -50),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        ScrollBarThickness = 3,
+        ScrollBarImageColor3 = Chilli.AccentColor,
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        CanvasSize = UDim2.new(),
+        Parent = frame,
+    })
+    padding(list, 12, 12, 6, 12)
+    create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 9), Parent = list })
+    local empty = label({
+        Size = UDim2.new(1, 0, 0, 60),
+        Text = opts.EmptyText or "Nothing to steal yet",
+        TextSize = 13,
+        FontFace = Fonts.Medium,
+        TextColor3 = Theme.Muted,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        LayoutOrder = 0,
+        Parent = list,
+    })
+
+    -- Hide / show tab on the inner edge: it stays on screen while the panel slides out.
+    local tab = create("TextButton", {
+        AnchorPoint = Vector2.new(right and 1 or 0, 0.5),
+        Position = UDim2.new(right and 0 or 1, right and -6 or 6, 0.5, 0),
+        Size = UDim2.fromOffset(26, 66),
+        BackgroundTransparency = 1,
+        Text = "",
+        AutoButtonColor = false,
+        Parent = holder,
+    })
+    rebirthFace(tab, 1)
+    scaleFeedback(tab, 1.06, 0.94)
+    local arrow = create("ImageLabel", {
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.fromScale(0.5, 0.45),
+        Size = UDim2.fromOffset(16, 16),
+        BackgroundTransparency = 1,
+        ImageColor3 = Color3.new(1, 1, 1),
+        ZIndex = 3,
+        Parent = tab,
+    })
+    applyIcon(arrow, right and "chevron-right" or "chevron-left")
+
+    function panel:SetCollapsed(value)
+        panel.Collapsed = value == true
+        local shift = panel.Collapsed and (holder.AbsoluteSize.X + 20) or 0
+        tween(holder, {
+            Position = UDim2.new(openPosition.X.Scale, openPosition.X.Offset + (right and shift or -shift), openPosition.Y.Scale, holder.Position.Y.Offset),
+        }, 0.35, Enum.EasingStyle.Quint)
+        tween(arrow, { Rotation = panel.Collapsed and 180 or 0 }, 0.25)
+    end
+    tab.MouseButton1Click:Connect(function()
+        panel:SetCollapsed(not panel.Collapsed)
+    end)
+
+    function panel:SetItems(items)
+        items = type(items) == "table" and items or {}
+        for index, item in ipairs(items) do
+            local card = panel._cards[index]
+            if not card then
+                card = Hud.stealCard(panel, list)
+                panel._cards[index] = card
+            end
+            card.frame.Visible = true
+            Hud.paintCard(card, item, index)
+        end
+        for index = #items + 1, #panel._cards do
+            panel._cards[index].frame.Visible = false
+            panel._cards[index].id = nil
+        end
+        countText.Text = tostring(#items)
+        empty.Visible = #items == 0
+    end
+
+    function panel:SetTitle(value)
+        header:FindFirstChildOfClass("TextLabel").Text = string.upper(tostring(value or ""))
+    end
+
+    function panel:SetVisible(value)
+        panel.Visible = value ~= false
+        holder.Visible = panel.Visible
+    end
+
+    function panel:Destroy()
+        for _, connection in connections do
+            pcall(function() connection:Disconnect() end)
+        end
+        table.clear(connections)
+        gui:Destroy()
+    end
+
+    panel:SetItems({})
+    return panel
+end
+
+Library.CreateSteal = Library.CreateStealPanel
 
 -- The downloaded file included a runnable showcase. Keep it as a reference,
 -- but never create its extra window when this source is loaded as a library.
