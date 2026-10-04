@@ -6307,7 +6307,13 @@ end
 
 -- A clean, centered copy of `source` in `viewport` (scripts / sounds / effects stripped, parts anchored).
 function Hud.preview(viewport, camera, source)
-    viewport:ClearAllChildren()
+    -- Everything but the camera goes: clearing it too destroyed the camera, and every preview after the first broke
+    -- the whole status:Set call.
+    for _, child in viewport:GetChildren() do
+        if child ~= camera then
+            child:Destroy()
+        end
+    end
     camera.Parent = viewport
     local copy
     pcall(function()
@@ -6634,7 +6640,15 @@ function Library:CreateStatus(opts)
             return
         end
         status._modelSource = model
-        status._preview = model and Hud.preview(viewport, camera, model) or nil
+        if status._preview and status._preview.model then
+            pcall(status._preview.model.Destroy, status._preview.model)
+        end
+        -- A model that cannot be previewed falls back to the icon; it never stops the rest of status:Set.
+        local ok, preview = false, nil
+        if model then
+            ok, preview = pcall(Hud.preview, viewport, camera, model)
+        end
+        status._preview = ok and preview or nil
         viewport.Visible = status._preview ~= nil
         icon.Visible = status._preview == nil
     end
