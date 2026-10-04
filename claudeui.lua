@@ -1154,14 +1154,22 @@ function Tab:Button(opts)
 end
 
 function Tab:Toggle(opts)
-    local button, buttonStroke, toggleTitle, _
-    opts, button, buttonStroke, _, toggleTitle = beginElement(self, opts, { Title = "Name", Description = "Desc", CurrentValue = "Default", Value = "Default" }, "TextButton", 56, "Toggle")
+    local button, buttonStroke, toggleTitle, toggleDesc, _
+    opts, button, buttonStroke, _, toggleTitle, toggleDesc = beginElement(self, opts, { Title = "Name", Description = "Desc", CurrentValue = "Default", Value = "Default" }, "TextButton", 56, "Toggle")
 
-    -- Black and pink: a near-black name, a pink bar on the left that lights up with the switch, and a pink-tinted card
-    -- with a pink rim while it is on.
+    -- Black and pink: a black card with a white name, a pink bar on the left that lights up with the switch, and a
+    -- deep rose card with a pink rim while it is on.
+    button.BackgroundColor3 = Color3.fromRGB(22, 14, 20)
+    button.BackgroundTransparency = 0
     if toggleTitle then
-        toggleTitle.TextColor3 = Color3.fromRGB(24, 10, 18)
+        toggleTitle.TextColor3 = Color3.new(1, 1, 1)
     end
+    if toggleDesc then
+        toggleDesc.TextColor3 = Color3.fromRGB(226, 188, 210)
+    end
+    local offRim = Color3.fromRGB(74, 42, 62)
+    buttonStroke.Color = offRim
+    buttonStroke:SetAttribute("RestColor", offRim)
     local bar = create("Frame", {
         Position = UDim2.fromOffset(5, 10),
         Size = UDim2.new(0, 3, 1, -20),
@@ -1222,8 +1230,8 @@ function Tab:Toggle(opts)
         tween(pill, { BackgroundColor3 = on and Style.AccentColor or Theme.Surface3 }, duration)
         tween(pillGlow, { ImageTransparency = on and 0.75 or 1 }, duration)
         tween(bar, { BackgroundTransparency = on and 0 or 0.7 }, duration)
-        tween(button, { BackgroundColor3 = on and Theme.Accent:Lerp(Color3.new(1, 1, 1), 0.86) or restBackground }, duration)
-        local rim = on and Theme.Accent or Theme.Outline
+        tween(button, { BackgroundColor3 = on and Color3.fromRGB(62, 16, 42) or restBackground }, duration)
+        local rim = on and Theme.Accent or offRim
         buttonStroke:SetAttribute("RestColor", rim)
         tween(buttonStroke, { Color = rim }, duration)
         local knobSize = TOUCH and 18 or 14
