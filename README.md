@@ -61,12 +61,15 @@ local Steal = Library:CreateStealPanel({
     Title = "Steal", Side = "Right",
     OnSteal = function(id) end,
     OnQueue = function(id) end,
+    OnMove = function(id, step) end,   -- optional: reorder arrows on queued cards
 })
+Steal:SetSubtitle("3 eggs  |  queue 1")
 
 Steal:SetItems({
     { Id = "uid", Name = "Astral Jackalope", Icon = "rbxassetid://...", Badge = "rbxassetid://...",
       Rarity = "Mythic", RarityColor = Color3.fromRGB(200, 120, 255),
-      Value = "$30M/s", Info = "8 kg", Featured = true, Queued = 1, ActionText = "STEAL" },
+      Value = "$30M/s", Info = "8 kg", Extra = "Gold, Shiny", Featured = true, Tag = "TARGET",
+      Queued = 1, CanUp = false, CanDown = true, ActionText = "STEAL" },
 })
 Steal:SetCollapsed(true)             -- the red tab on its edge also toggles it
 Steal:SetVisible(false)

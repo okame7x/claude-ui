@@ -6526,7 +6526,7 @@ end
 -- One pooled steal card (reused by SetItems, so a refresh never rebuilds the list). Its plate is white so the
 -- rarity tint gradient shows its real colours; the left bar, the icon ring and the glow take the rarity too.
 function Hud.stealCard(panel, list)
-    local card = {}
+    local card = { panel = panel }
     local frame = create("Frame", {
         Size = UDim2.new(1, 0, 0, 80),
         BackgroundColor3 = Color3.new(1, 1, 1),
@@ -6640,8 +6640,9 @@ function Hud.stealCard(panel, list)
     card.chips = chips
     card.valuePill, card.valueText = Hud.pill(chips, "", Hud.Green, 1)
     card.infoPill, card.infoText = Hud.pill(chips, "", Hud.Sky, 2)
+    card.extraPill, card.extraText = Hud.pill(chips, "", Hud.Lilac, 3)
 
-    card.best = Hud.pill(frame, "BEST", Hud.Gold)
+    card.best, card.bestText, card.bestGradient = Hud.pill(frame, "BEST", Hud.Gold)
     card.best.AnchorPoint = Vector2.new(1, 0)
     card.best.Position = UDim2.new(1, -10, 0, -9)
     card.best.ZIndex = 4
@@ -6691,6 +6692,39 @@ function Hud.stealCard(panel, list)
         TextXAlignment = Enum.TextXAlignment.Center,
         Parent = card.queue,
     })
+    -- Reorder arrows beside a queued card's QUEUE button (only with panel.OnMove).
+    local function arrowButton(icon, x, step)
+        local button = create("TextButton", {
+            AnchorPoint = Vector2.new(1, 0),
+            Position = UDim2.new(1, x, 0, 48),
+            Size = UDim2.fromOffset(20, 22),
+            BackgroundColor3 = Theme.Surface3,
+            Text = "",
+            AutoButtonColor = false,
+            Visible = false,
+            Parent = frame,
+        })
+        corner(button, UDim.new(0, 6))
+        outlineStroke(button, 1.5)
+        scaleFeedback(button, 1.08, 0.92)
+        local glyph = create("ImageLabel", {
+            AnchorPoint = Vector2.new(0.5, 0.5),
+            Position = UDim2.fromScale(0.5, 0.5),
+            Size = UDim2.fromOffset(13, 13),
+            BackgroundTransparency = 1,
+            ImageColor3 = Theme.Text,
+            Parent = button,
+        })
+        applyIcon(glyph, icon)
+        button.MouseButton1Click:Connect(function()
+            if card.id ~= nil and button.Active then
+                safeCall(panel.OnMove, card.id, step)
+            end
+        end)
+        return button, glyph
+    end
+    card.up, card.upGlyph = arrowButton("chevron-up", -32, -1)
+    card.down, card.downGlyph = arrowButton("chevron-down", -10, 1)
     card.steal.MouseButton1Click:Connect(function()
         if card.id ~= nil then
             safeCall(panel.OnSteal, card.id)
@@ -6704,7 +6738,8 @@ function Hud.stealCard(panel, list)
     return card
 end
 
--- item: { Id, Name, Icon, Badge, Rarity, RarityColor, Value, Info (weight, light blue), Featured, Queued, ActionText }
+-- item: { Id, Name, Icon, Badge, Rarity, RarityColor, Value, Info (weight, light blue), Extra (lilac chip), Featured,
+--   Tag, TagColors, Queued, CanUp, CanDown, ActionText }
 function Hud.paintCard(card, item, order)
     card.id = item.Id
     local featured = item.Featured == true
@@ -6752,21 +6787,38 @@ function Hud.paintCard(card, item, order)
     card.valueText.Text = tostring(item.Value or "")
     card.infoPill.Visible = item.Info ~= nil
     card.infoText.Text = tostring(item.Info or "")
-    card.best.Visible = featured
+    card.extraPill.Visible = item.Extra ~= nil and item.Extra ~= ""
+    card.extraText.Text = tostring(item.Extra or "")
+    -- Tag on the corner: the item's own (TARGET, #2...) or BEST on the featured card.
+    local tag = item.Tag or (featured and "BEST" or nil)
+    card.best.Visible = tag ~= nil
+    card.bestText.Text = tostring(tag or "")
+    Hud.setColors(card.bestGradient, item.TagColors or Hud.Gold)
     card.stealText.Text = item.ActionText or "STEAL"
 
+    -- Queued: lilac "#n" button, narrowed to make room for the reorder arrows when the panel can move items.
     local queued = item.Queued ~= nil
-    card.queueText.Text = queued and ("#" .. tostring(item.Queued) .. " QUEUED") or "+ QUEUE"
+    local movable = queued and card.panel.OnMove ~= nil
+    card.queue.Size = UDim2.fromOffset(movable and 38 or 82, 22)
+    card.queue.Position = UDim2.new(1, movable and -54 or -10, 0, 48)
+    card.queueText.Text = queued and (movable and ("#" .. tostring(item.Queued)) or ("#" .. tostring(item.Queued) .. " QUEUED")) or "+ QUEUE"
     card.queueText.TextColor3 = queued and Color3.new(1, 1, 1) or Theme.Text
     card.queueFill.Color = queued and ColorSequence.new(Hud.Lilac[1], Hud.Lilac[2]) or ColorSequence.new(Theme.Surface3, Theme.Surface2)
+    for _, pair in { { card.up, card.upGlyph, item.CanUp ~= false }, { card.down, card.downGlyph, item.CanDown ~= false } } do
+        local button, glyph, enabled = pair[1], pair[2], pair[3]
+        button.Visible = movable
+        button.Active = enabled
+        button.BackgroundTransparency = enabled and 0 or 0.5
+        glyph.ImageTransparency = enabled and 0 or 0.6
+    end
 end
 
 -- Steal HUD: a side panel listing things to take (featured first), each with STEAL and QUEUE; a tab on its inner
 -- edge hides / shows it. opts: { Title, Subtitle, Side = "Right" | "Left", Width, Height, EmptyText, OnSteal,
--- OnQueue }.
+-- OnQueue, OnMove(id, step) }. panel:SetSubtitle(text) updates the line under the title.
 function Library:CreateStealPanel(opts)
     opts = type(opts) == "table" and opts or {}
-    local panel = { Collapsed = false, Visible = true, OnSteal = opts.OnSteal, OnQueue = opts.OnQueue, _cards = {}, _connections = {} }
+    local panel = { Collapsed = false, Visible = true, OnSteal = opts.OnSteal, OnQueue = opts.OnQueue, OnMove = opts.OnMove, _cards = {}, _connections = {} }
     local connections = panel._connections
     local gui = Hud.screen(opts.Name or "BloomSteal", 994)
     panel.Gui = gui
@@ -6801,7 +6853,7 @@ function Library:CreateStealPanel(opts)
         TextSize = 16,
         Parent = header,
     }))
-    label({
+    local subtitleLabel = label({
         Position = UDim2.fromOffset(16, 33),
         Size = UDim2.new(1, -90, 0, 15),
         Text = opts.Subtitle or "Best eggs on the field",
@@ -6943,6 +6995,11 @@ function Library:CreateStealPanel(opts)
 
     function panel:SetTitle(value)
         titleLabel.Text = string.upper(tostring(value or ""))
+    end
+
+    function panel:SetSubtitle(value, color)
+        subtitleLabel.Text = tostring(value or "")
+        subtitleLabel.TextColor3 = color or Theme.Muted
     end
 
     function panel:SetVisible(value)
